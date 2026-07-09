@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live R console</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ live R console</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Run real R, right here</div>
+  <h1>A real R console, running in your browser</h1>
+  <p class="sub">This is not a simulation of R and not a server running your code somewhere else. R itself is compiled to WebAssembly (the <a href="https://docs.r-wasm.org/webr/latest/" target="_blank" rel="noopener">webR</a> project) and executes on your machine, in this tab. Edit any cell below and press Run, or <kbd>Cmd/Ctrl + Enter</kbd>. The first cell you run takes a few seconds while the R runtime downloads; every cell after that is instant.</p>
+</header>
+
+<div class="card">
+  <h2><span class="n">1</span>Descriptives, the way this site does them</h2>
+  <p>Every quantile on this site routes through type 8. Change the numbers in <span class="mono">x</span> and rerun.</p>
+  <div id="cell-descr"></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>A t-test, printed exactly like real R prints it</h2>
+  <p>This is the same <span class="mono">t.test()</span> call from Module 3, not a reformatted version of its output. Change <span class="mono">mu</span> and watch the p-value respond.</p>
+  <div id="cell-ttest"></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>A real plot</h2>
+  <p>Base R graphics render to a real bitmap and come back as an image, not a canned picture. Change the distribution or the sample size and rerun to get a new one.</p>
+  <div id="cell-plot"></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">4</span>Open cell</h2>
+  <p>Blank. Whatever you write here runs the same way. Base R only, matching this site's convention: no packages beyond what ships with R itself, so nothing installs at runtime.</p>
+  <div id="cell-scratch"></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">→</span>Two honest limits</h2>
+  <p>Two things do not work in this mode, the tradeoff for running with zero server and zero account: a running cell cannot be interrupted mid-execution (an infinite loop will hang the cell, reload the page to recover), and functions that pause for typed input, <span class="mono">readline()</span>, <span class="mono">menu()</span>, <span class="mono">browser()</span>, are not supported. Everything else in base R, including <span class="mono">stats</span> and graphics, runs for real.</p>
+</div>
+
+<footer><a href="index.html">← all modules</a> &nbsp;·&nbsp; R runs locally in your browser via WebAssembly; nothing you type here is sent anywhere. Ian Helfrich, Ph.D.</footer>
+</div>
+
+<script type="module">
+import { mountLiveR } from './webr-lib.js';
+
+mountLiveR(document.getElementById('cell-descr'), {
+  height: 130,
+  code: `x <- c(4.2, 8.1, 15.0, 16.3, 23.7, 42.0, 6.5, 11.2)
+
+median(x)
+IQR(x, type = 8)
+mad(x, constant = 1.4826)
+quantile(x, probs = c(0.25, 0.5, 0.75, 0.9), type = 8)`,
+});
+
+mountLiveR(document.getElementById('cell-ttest'), {
+  height: 100,
+  code: `set.seed(511)
+delivery <- as.numeric(scale(rnorm(16))) * 9 + 34.5
+
+t.test(delivery, mu = 30, alternative = "greater")`,
+});
+
+mountLiveR(document.getElementById('cell-plot'), {
+  height: 90,
+  code: `set.seed(42)
+sample <- rlnorm(400, meanlog = 0, sdlog = 1)
+hist(sample, breaks = 30, col = "#b4532a", border = "white",
+     main = "A right-skewed sample", xlab = "value")`,
+});
+
+mountLiveR(document.getElementById('cell-scratch'), {
+  height: 90,
+  code: `# write anything here\n`,
+});
+</script>
+</body>
+</html>

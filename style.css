@@ -72,3 +72,31 @@ a.tile .k{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.
 .hero3d .hero-readout b{color:var(--rust)}
 .hero3d .hero-fallback{display:flex;align-items:center;justify-content:center;min-height:260px;
   background:#f4f1ea;border-radius:10px;color:var(--dim);font-size:.92rem;text-align:center;padding:1.5rem}
+
+/* live R cells -- a real R runtime (WebAssembly), not a mock */
+.liver-shell{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.liver-ed{overflow-y:auto;border-bottom:1px solid var(--line)}
+.liver-ed .cm-editor{height:100%}
+.liver-ed .cm-scroller{overflow:auto}
+.liver-bar{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;background:#f4f1ea}
+.liver-run{font:inherit;font-size:.86rem;font-weight:700;padding:.4rem .9rem;border-radius:7px;
+  border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer}
+.liver-run:disabled{opacity:.55;cursor:progress}
+.liver-run:not(:disabled):hover{background:var(--rust);border-color:var(--rust)}
+.liver-reset{font:inherit;font-size:.8rem;padding:.4rem .7rem;border-radius:7px;
+  border:1px solid var(--line);background:#fff;color:var(--dim);cursor:pointer}
+.liver-reset:hover{color:var(--ink);border-color:var(--ink)}
+.liver-status{font-size:.8rem;color:var(--dim)}
+.liver-out{background:var(--ink);color:#eef2f7;padding:.7rem .9rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.85rem;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto}
+.liver-line{line-height:1.5}
+.liver-stdout{color:#eef2f7}
+.liver-echo{color:#8fa6bd}
+.liver-stderr,.liver-error{color:#f2b8a0}
+.liver-warning{color:#f0d29a}
+.liver-empty{color:#8fa6bd;font-style:italic}
+.liver-running{color:#8fa6bd}
+.liver-plot{display:block;max-width:100%;height:auto;margin:.5rem 0;border-radius:6px;background:#fff}
+.liver-fallback{padding:.8rem;color:var(--dim);font-size:.88rem}
+.liver-textarea{width:100%;min-height:100px;font-family:ui-monospace,monospace;font-size:.85rem;
+  border:1px solid var(--line);border-radius:6px;padding:.5rem;margin-top:.4rem}
