@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice problems</title>
+<link rel="stylesheet" href="style.css">
+<script>MathJax={tex:{inlineMath:[['$','$']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<style>
+  .bar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.4rem 0 1rem}
+  .chip{font:inherit;font-size:.85rem;padding:.32rem .7rem;border-radius:20px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);cursor:pointer}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip.count{margin-left:auto;border:none;background:none;color:var(--dim);cursor:default;font-size:.85rem}
+  .prob{border:1px solid var(--line);border-radius:12px;background:#fff;padding:1.1rem 1.2rem;margin:1rem 0;
+    box-shadow:0 1px 2px rgba(18,35,59,.04)}
+  .phead{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;flex-wrap:wrap}
+  .phead .pill{background:#e7ecf3;color:var(--ink)} .phead .pill.Bayes{background:#efe7f0;color:var(--violet)}
+  .phead .pill.Welch,.phead .pill.Exceedance{background:#f4e3da;color:var(--rust)}
+  .phead .pill.Theory{background:#e9efe6;color:var(--sage)}
+  .phead b{font-size:1.02rem} .phead .reroll{margin-left:auto;font:inherit;font-size:.82rem;color:var(--dim);
+    background:none;border:none;cursor:pointer} .phead .reroll:hover{color:var(--rust)}
+  .data{font-family:ui-monospace,Menlo,monospace;font-size:.86rem;background:#f4f1ea;border-radius:6px;
+    padding:.5rem .7rem;margin:.5rem 0;overflow-x:auto}
+  table.mini{width:auto;margin:.4rem 0} table.mini td{border:none;padding:.15rem .8rem .15rem 0;text-align:left}
+  .fields{display:flex;flex-wrap:wrap;gap:.8rem;margin:.7rem 0}
+  .field{display:flex;align-items:center;gap:.4rem} .field label{font-size:.9rem;color:var(--ink)}
+  .field input{width:110px;font:inherit;padding:.35rem .5rem;border:1px solid var(--line);border-radius:7px}
+  .field .suf{color:var(--dim);font-size:.9rem} .field .mark{font-weight:800;width:1.2em}
+  .mark.ok{color:var(--sage)} .mark.bad{color:var(--rust)}
+  .choices{display:flex;flex-direction:column;gap:.45rem;margin:.6rem 0}
+  .choice{text-align:left;font:inherit;font-size:.95rem;padding:.55rem .8rem;border:1px solid var(--line);
+    border-radius:9px;background:#fff;cursor:pointer}
+  .choice:hover{border-color:var(--ink)} .choice.pick{border-color:var(--ink);background:#eef2f7}
+  .choice.ok{border-color:var(--sage);background:#eef4ea} .choice.bad{border-color:var(--rust);background:#f7ece7}
+  .pbtns{display:flex;gap:.6rem;margin:.3rem 0}
+  .pbtns button{font:inherit;font-size:.9rem;padding:.4rem .9rem;border-radius:8px;cursor:pointer}
+  .check{background:var(--ink);color:#fff;border:1px solid var(--ink)}
+  .reveal{background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .feedback{margin:.5rem 0 0;font-size:.92rem;font-weight:600}
+  .feedback.ok{color:var(--sage)} .feedback.bad{color:var(--rust)}
+  .solution{margin:.6rem 0 0;padding:.7rem .9rem;background:#f4f1ea;border-left:3px solid var(--gold);
+    border-radius:6px;font-size:.93rem}
+</style>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ practice</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Practice</div>
+  <h1>Practice problems</h1>
+  <p class="sub">Worked problems with generated data across descriptives, the t-test and Welch, OLS, Bayes, thresholds, and the conceptual traps. Type an answer and check it, or reveal the full solution. Hit "new numbers" on any problem for a fresh version, or shuffle the whole set.</p>
+</header>
+
+<div class="bar" id="bar"></div>
+<div id="list"></div>
+
+<footer><a href="index.html">← all notes</a> &nbsp;·&nbsp; Synthetic data, generated in your browser. Ian Helfrich, Ph.D.</footer>
+</div>
+
+<script src="lib.js"></script>
+<script src="problems.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+let BASE=12345, filter="All";
+const topics=["All",...Array.from(new Set(PROBLEMS.map(p=>p.topic)))];
+
+function typeset(node){ if(window.MathJax&&MathJax.typesetPromise) MathJax.typesetPromise(node?[node]:undefined).catch(()=>{}); }
+
+function near(v,f){ const tol=Math.max(f.tolAbs||0,(f.tolRel||0)*Math.abs(f.ans)); return Math.abs(v-f.ans)<=tol+1e-9; }
+
+function cardHTML(p, inst){
+  const t=p.topic;
+  let ans="";
+  if(p.kind==="numeric"){
+    ans=`<div class="fields">${inst.fields.map(f=>`<div class="field"><label>${f.label} =</label><input type="number" step="any" data-k="${f.key}">${f.suffix?`<span class="suf">${f.suffix}</span>`:""}<span class="mark"></span></div>`).join("")}</div>`;
+  } else {
+    ans=`<div class="choices">${inst.choices.map((c,i)=>`<button class="choice" data-i="${i}">${c}</button>`).join("")}</div>`;
+  }
+  return `<div class="prob" data-id="${p.id}" data-topic="${t}">
+    <div class="phead"><span class="pill ${t}">${t}</span><b>${p.title}</b><button class="reroll">↻ new numbers</button></div>
+    <div class="pbody">${inst.promptHTML}</div>
+    ${ans}
+    <div class="pbtns"><button class="check">Check</button><button class="reveal">Solution</button></div>
+    <div class="feedback"></div>
+    <div class="solution" hidden>${inst.solutionHTML}</div>
+  </div>`;
+}
+
+function mount(card, p, inst){
+  card.querySelector(".reveal").onclick=()=>{const s=card.querySelector(".solution");s.hidden=!s.hidden;typeset(s);};
+  card.querySelector(".reroll").onclick=()=>{ inst=makeProblemInstance(p, (inst.seed||0)+104729);
+    const fresh=document.createElement("div"); fresh.innerHTML=cardHTML(p,inst);
+    const nc=fresh.firstElementChild; card.replaceWith(nc); mount(nc,p,inst); typeset(nc); };
+  const fb=card.querySelector(".feedback");
+  if(p.kind==="numeric"){
+    card.querySelector(".check").onclick=()=>{
+      let all=true,any=false;
+      inst.fields.forEach(f=>{
+        const inp=card.querySelector(`input[data-k="${f.key}"]`); const mk=inp.parentElement.querySelector(".mark");
+        if(inp.value===""){mk.textContent="";all=false;return;} any=true;
+        const ok=near(parseFloat(inp.value),f); mk.textContent=ok?"✓":"✗"; mk.className="mark "+(ok?"ok":"bad"); if(!ok)all=false;
+      });
+      if(!any){fb.textContent="Enter an answer first.";fb.className="feedback";return;}
+      fb.textContent= all?"Correct.":"Not quite. Check the marked fields, or open the solution.";
+      fb.className="feedback "+(all?"ok":"bad");
+      if(all){const s=card.querySelector(".solution");s.hidden=false;typeset(s);}
+    };
+  } else {
+    let picked=-1;
+    card.querySelectorAll(".choice").forEach(btn=>btn.onclick=()=>{
+      picked=+btn.dataset.i;
+      card.querySelectorAll(".choice").forEach(b=>b.classList.remove("pick","ok","bad"));
+      btn.classList.add("pick");
+    });
+    card.querySelector(".check").onclick=()=>{
+      if(picked<0){fb.textContent="Pick an option first.";fb.className="feedback";return;}
+      const ok=picked===inst.correct;
+      card.querySelectorAll(".choice").forEach((b,i)=>{ if(i===inst.correct)b.classList.add("ok"); if(i===picked&&!ok)b.classList.add("bad"); });
+      fb.textContent= ok?"Correct.":"Not quite.";fb.className="feedback "+(ok?"ok":"bad");
+      const s=card.querySelector(".solution");s.hidden=false;typeset(s);
+    };
+  }
+}
+
+function render(){
+  const list=$("#list"); list.innerHTML="";
+  const shown=PROBLEMS.filter(p=>filter==="All"||p.topic===filter);
+  shown.forEach((p,idx)=>{
+    const inst=makeProblemInstance(p, BASE+idx*97);
+    const holder=document.createElement("div"); holder.innerHTML=cardHTML(p,inst);
+    const card=holder.firstElementChild; list.appendChild(card); mount(card,p,inst);
+  });
+  typeset(list);
+}
+function renderBar(){
+  $("#bar").innerHTML = topics.map(t=>`<button class="chip ${t===filter?"on":""}" data-t="${t}">${t}</button>`).join("")
+    + `<button class="chip" id="newset">↻ shuffle all</button>`;
+  $("#bar").querySelectorAll(".chip[data-t]").forEach(c=>c.onclick=()=>{filter=c.dataset.t;renderBar();render();});
+  $("#newset").onclick=()=>{BASE=(BASE*1103515245+12345)>>>0;render();};
+}
+renderBar(); render();
+</script>
+</body>
+</html>
