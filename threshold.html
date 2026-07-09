@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One threshold, four policies</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ one threshold, four policies</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">The core idea</div>
+  <h1>One threshold, four policies</h1>
+  <p class="sub">Flag every row whose volume exceeds a single cutoff, and the same rule catches a tenth of one channel and two thirds of another. Drag the threshold and watch a shared number stop being a shared policy.</p>
+</header>
+
+<div class="card">
+  <h2><span class="n">1</span>Drag the flag threshold</h2>
+  <div class="controls"><div class="ctrl">
+    <label>Flag when volume exceeds <b id="tOut"></b></label>
+    <input id="t" type="range" min="0" max="40" step="0.1" value="3">
+  </div></div>
+  <canvas id="surv" width="880" height="300"></canvas>
+  <div class="legend" id="leg"></div>
+  <table>
+    <thead><tr><th>channel</th><th>flag rate at this cutoff</th><th>percentile of the cutoff</th><th>rows flagged</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="verdict"><div class="row" id="v1"></div><div class="row" id="v2"></div></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>Why this happens</h2>
+  <p>Each curve is a survival function, $S_g(t)=\Pr(\text{volume} > t \mid \text{channel } g)$, the share of a channel that a cutoff of $t$ would flag. The channels sit at very different levels, so a vertical line at one value slices each curve at a different height. A fixed cutoff is really four different flag rates wearing one number. Set it at 3 and read the table: it is the 90th percentile of one channel and the 30th of another.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>What to do instead</h2>
+  <p>Flag inside each channel, not across them. Either use each channel's own percentile, so "top 5%" means the same thing everywhere, or choose a cutoff per channel from the cost of a false flag. The threshold becomes a policy again once it is conditional on the channel. A single global number cannot be, no matter how carefully it is chosen.</p>
+</div>
+
+<footer><a href="index.html">← all notes</a> &nbsp;·&nbsp; Synthetic data, generated in your browser. Ian Helfrich, Ph.D.</footer>
+</div>
+
+<script src="lib.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const CH = channels(3000);
+CH.forEach(c=>{ c.sorted=sortedCopy(c.data); });
+const TMAX=40, GRID=240;
+// precompute survival curves once
+const ts=[]; for(let i=0;i<=GRID;i++) ts.push(TMAX*i/GRID);
+CH.forEach(c=>{ c.curve = ts.map(t=>survivalAt(c.data,t)); });
+
+// legend
+$("leg").innerHTML = CH.map(c=>`<span><b style="color:${c.color}">■</b> ${c.name}</span>`).join("");
+
+const cv=$("surv"), ctx=cv.getContext("2d");
+const W=cv.width,H=cv.height, mL=44,mR=12,mT=14,mB=30;
+const px=t=>mL+(t/TMAX)*(W-mL-mR);
+const py=s=>mT+(1-s)*(H-mT-mB);
+
+function drawBase(){
+  ctx.clearRect(0,0,W,H);
+  // axes
+  ctx.strokeStyle="#e4ded3";ctx.lineWidth=1;ctx.fillStyle=PAL.dim;ctx.font="11px -apple-system,sans-serif";
+  for(let s=0;s<=1;s+=0.25){const y=py(s);ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(W-mR,y);ctx.stroke();
+    ctx.fillText((s*100)+"%",6,y+4);}
+  for(let t=0;t<=TMAX;t+=5){ctx.fillText(t,px(t)-3,H-8);}
+  // curves
+  CH.forEach(c=>{ctx.strokeStyle=c.color;ctx.lineWidth=2.4;ctx.beginPath();
+    c.curve.forEach((s,i)=>{const X=px(ts[i]),Y=py(s); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);});ctx.stroke();});
+}
+function update(){
+  const t=+$("t").value; $("tOut").textContent=t.toFixed(1);
+  drawBase();
+  // vertical line
+  ctx.strokeStyle=PAL.gold;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(px(t),mT);ctx.lineTo(px(t),H-mB);ctx.stroke();ctx.setLineDash([]);
+  // dots + table
+  let rows="";
+  CH.forEach(c=>{
+    const fr=survivalAt(c.data,t), le=leAt(c.data,t);
+    ctx.fillStyle=c.color;ctx.beginPath();ctx.arc(px(t),py(fr),4.5,0,7);ctx.fill();
+    rows+=`<tr><td><b style="color:${c.color}">${c.name}</b></td><td>${pct(fr)}</td><td>${pct(le)} pctile</td><td>${Math.round(fr*c.data.length).toLocaleString()} of ${c.data.length.toLocaleString()}</td></tr>`;
+  });
+  $("tbody").innerHTML=rows;
+  const type=survivalAt(CH[0].data,t), dc=survivalAt(CH[1].data,t);
+  $("v1").innerHTML=`At a cutoff of <b>${t.toFixed(1)}</b>, this one rule flags <b>${pct(type)}</b> of ${CH[0].name} but <b>${pct(dc)}</b> of ${CH[1].name}.`;
+  $("v2").innerHTML = Math.abs(type-dc)>0.15
+    ? "Same number, different policy. That gap is the whole problem with a global threshold."
+    : "Here the two big channels happen to align. Slide away and they diverge fast.";
+}
+$("t").addEventListener("input",update);
+update();
+</script>
+</body>
+</html>

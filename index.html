@@ -3,203 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Regression as a two-group comparison: when b1 is enough, and when the p-value lies</title>
-<script>
-  MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] } };
-</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
-<style>
-  :root{
-    --ink:#12233b; --rust:#b4532a; --sage:#6b8e5a; --gold:#d69f43;
-    --violet:#6b5b8e; --dim:#8a8f98; --paper:#faf8f3; --line:#e4ded3; --card:#ffffff;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.55;}
-  .wrap{max-width:920px;margin:0 auto;padding:2.2rem 1.2rem 4rem}
-  header h1{font-size:1.5rem;line-height:1.25;margin:0 0 .3rem}
-  header p.sub{color:var(--dim);margin:.2rem 0 0;font-size:1.02rem}
-  .tag{display:inline-block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--rust);font-weight:700;margin-bottom:.5rem}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
-    padding:1.3rem 1.4rem;margin:1.4rem 0;box-shadow:0 1px 2px rgba(18,35,59,.04)}
-  h2{font-size:1.15rem;margin:.1rem 0 .7rem;color:var(--ink)}
-  h2 .n{color:var(--gold);font-weight:800;margin-right:.4rem}
-  p{margin:.55rem 0}
-  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em}
-  .eq{background:#f4f1ea;border-left:3px solid var(--gold);padding:.5rem .9rem;border-radius:6px;margin:.7rem 0}
-  ul{margin:.4rem 0 .4rem 1.1rem;padding:0} li{margin:.3rem 0}
-  .pill{display:inline-block;padding:.05rem .5rem;border-radius:20px;font-size:.82rem;font-weight:600}
-  .pill.ink{background:#e7ecf3;color:var(--ink)} .pill.rust{background:#f4e3da;color:var(--rust)}
-  .controls{display:grid;grid-template-columns:1fr;gap:1rem;margin:.6rem 0 1rem}
-  .ctrl label{display:flex;justify-content:space-between;font-size:.9rem;font-weight:600;margin-bottom:.25rem}
-  .ctrl label b{color:var(--rust);font-variant-numeric:tabular-nums}
-  input[type=range]{width:100%;accent-color:var(--ink)}
-  canvas{width:100%;height:auto;display:block;margin:.4rem 0 .2rem;border-radius:8px}
-  table{width:100%;border-collapse:collapse;margin:.6rem 0;font-size:.94rem}
-  th,td{text-align:right;padding:.45rem .5rem;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-  th:first-child,td:first-child{text-align:left}
-  thead th{color:var(--dim);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}
-  tr.welch td{color:var(--ink);font-weight:600}
-  tr.naive td{color:var(--dim)}
-  .verdict{background:#f4f1ea;border-radius:8px;padding:.7rem .9rem;margin:.7rem 0;font-size:.94rem}
-  .verdict b{color:var(--rust)} .verdict .row{margin:.15rem 0}
-  pre{background:var(--ink);color:#eef2f7;padding:1rem 1.1rem;border-radius:10px;overflow:auto;
-    font-size:.86rem;line-height:1.5}
-  pre .c{color:#8fa6bd} pre .k{color:var(--gold)}
-  footer{color:var(--dim);font-size:.85rem;margin-top:2rem;text-align:center}
-  .legend{font-size:.85rem;color:var(--dim);margin:.1rem 0 .4rem}
-  .legend b.a{color:var(--ink)} .legend b.b{color:var(--rust)}
-  @media(min-width:640px){ .controls{grid-template-columns:1fr 1fr 1fr} }
-</style>
+<title>Applied methods, interactive</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">interactive notes</span></nav>
 <div class="wrap">
 <header>
-  <div class="tag">Applied methods note</div>
-  <h1>Is running <span class="mono">Vol = b0 + b1·UserType + e</span> and checking whether b1 is significant the right move?</h1>
-  <p class="sub">Yes for the estimate, no for the significance test. b1 is exactly the difference in means. The p-value beside it answers a question whose answer is already known. Synthetic data, generated in your browser.</p>
+  <div class="tag">Interactive teaching notes</div>
+  <h1>How to think about a skewed, multi-channel score</h1>
+  <p class="sub">Short interactive pieces on the questions that come up when a heavy-tailed volume measure is split across channels: how to compare groups, how to judge whether a value is extreme, and how to set a threshold that means the same thing everywhere. Every page runs on synthetic data generated in your browser. No real data is used.</p>
 </header>
 
-<div class="card">
-  <h2><span class="n">1</span>b1 is the difference in means. That part is right.</h2>
-  <p>With <span class="mono">UserType</span> coded 0/1 (0 = Type, 1 = DoubleClick), the regression is a two-group comparison:</p>
-  <div class="eq">$$\text{Vol} = b_0 + b_1\,\text{UT} + e, \qquad b_0 = \overline{\text{Vol}}_{\text{Type}}, \qquad b_1 = \overline{\text{Vol}}_{\text{DoubleClick}} - \overline{\text{Vol}}_{\text{Type}}.$$</div>
-  <p>So the coefficient <b>is</b> the number she wants. The estimate is fine. Two things around it are not: the significance test is a foregone conclusion, and the default standard error assumes equal variance. The demo below shows both.</p>
+<div class="grid">
+  <a class="tile" href="threshold.html">
+    <span class="k">The core idea</span>
+    <h3>One threshold, four policies</h3>
+    <p>A single cutoff flags a tenth of one channel and two thirds of another. Drag the threshold and watch a shared rule fall apart across channels.</p>
+  </a>
+  <a class="tile" href="extremeness.html">
+    <span class="k">Extremeness</span>
+    <h3>How extreme is a value?</h3>
+    <p>The answer is its percentile, and it depends entirely on the channel. A value of 3 is the 90th percentile in one and the 30th in another.</p>
+  </a>
+  <a class="tile" href="welch.html">
+    <span class="k">Comparing two groups</span>
+    <h3>Regression, Welch, and the p-value that lies</h3>
+    <p>b1 is the difference in means. The default significance test beside it is a foregone conclusion at large n, and its standard error assumes equal variance.</p>
+  </a>
+  <a class="tile" href="qqplot.html">
+    <span class="k">Diagnostics</span>
+    <h3>How to read a QQ plot</h3>
+    <p>Toggle the shape of a distribution and watch the QQ plot bend. It is a shape check, not a way to locate where a single value sits.</p>
+  </a>
 </div>
 
 <div class="card">
-  <h2><span class="n">2</span>The live demo</h2>
-  <div class="controls">
-    <div class="ctrl"><label>Sample size (Type group) <b id="nOut"></b></label>
-      <input id="n" type="range" min="60" max="60000" step="60" value="1200"></div>
-    <div class="ctrl"><label>Size ratio (DoubleClick : Type) <b id="rOut"></b></label>
-      <input id="r" type="range" min="0.2" max="5" step="0.1" value="1"></div>
-    <div class="ctrl"><label>True mean gap <b id="gOut"></b></label>
-      <input id="g" type="range" min="0" max="8" step="0.1" value="5.6"></div>
-  </div>
-
-  <canvas id="hist" width="880" height="210"></canvas>
-  <div class="legend"><b class="a">■</b> Type-like (low mean, low spread) &nbsp;&nbsp; <b class="b">■</b> DoubleClick-like (higher mean, higher spread)</div>
-
-  <table>
-    <thead><tr><th>standard error used</th><th>b1 (mean diff)</th><th>SE</th><th>t</th><th>p-value</th></tr></thead>
-    <tbody>
-      <tr class="naive"><td>OLS default (pooled, equal-variance)</td><td id="b1a"></td><td id="sea"></td><td id="ta"></td><td id="pa"></td></tr>
-      <tr class="welch"><td>Welch / HC2 robust</td><td id="b1b"></td><td id="seb"></td><td id="tb"></td><td id="pb"></td></tr>
-    </tbody>
-  </table>
-  <p style="font-size:.92rem;margin:.2rem 0 0">95% CI for b1 (Welch): <b id="ci" class="mono"></b></p>
-  <div class="verdict"><div class="row" id="vSE"></div><div class="row" id="vP"></div></div>
+  <p style="margin:.2rem 0;color:var(--dim)">The thread through all four: name the decision first, then the quantity that decision needs, then the tool. A test statistic is rarely that quantity.</p>
 </div>
 
-<div class="card">
-  <h2><span class="n">3</span>Why the significance is preordained</h2>
-  <p>The t-statistic is about the effect divided by its SE, and the SE shrinks like $1/\sqrt{n}$, so $t$ grows like $(\text{effect})\times\sqrt{n}$. With tens of thousands of rows per group, any real difference is multiplied into a huge $t$ and a p-value that underflows to zero. Hold the gap fixed and drag the sample size up: the p-value crashes while b1 barely moves. This is why "is b1 significant" is the wrong question on data this size. Her two channels are obviously not the same distribution, so a test of "are they identical" can only say yes.</p>
+<footer>Synthetic data throughout. Built as teaching notes.<br>Ian Helfrich, Ph.D.</footer>
 </div>
-
-<div class="card">
-  <h2><span class="n">4</span>The equal-variance trap, and when it bites</h2>
-  <p>Plain <span class="mono">lm()</span> reports the <span class="pill ink">pooled</span> SE, which assumes one shared variance. The honest version is <span class="pill rust">Welch</span>, which uses each group's own variance, and for a single 0/1 regressor the robust <span class="mono">HC2</span> SE equals it exactly. One subtlety worth knowing: when the two groups are the <em>same size</em>, the pooled and Welch SEs coincide, so the distinction looks harmless. Drag the size ratio away from 1 in the demo and watch them separate. Her channels are close to equal size, so the numbers nearly agree here, but the robust SE is the safe default because it costs nothing when sizes match and is correct when they do not.</p>
-</div>
-
-<div class="card">
-  <h2><span class="n">5</span>What to actually run</h2>
-<pre><span class="c"># b1 is the difference in means, either way:</span>
-m &lt;- <span class="k">lm</span>(Volume ~ UserType)
-
-<span class="c"># Correct SEs even under unequal variance (HC2 == Welch for a 0/1 regressor):</span>
-<span class="k">library</span>(sandwich); <span class="k">library</span>(lmtest)
-<span class="k">coeftest</span>(m, vcov = <span class="k">vcovHC</span>(m, <span class="k">"HC2"</span>))
-<span class="k">coefci</span>(m,  vcov = <span class="k">vcovHC</span>(m, <span class="k">"HC2"</span>))     <span class="c"># report THIS interval, not the star</span>
-
-<span class="c"># Or the one-liner that is already Welch by default:</span>
-<span class="k">t.test</span>(Volume ~ UserType)</pre>
-  <p>Report b1 with its Welch interval as an <b>effect size</b>. Then say the useful thing: the difference is roughly multiplicative, DoubleClick runs about 5 to 7 times Type across the whole distribution.</p>
-</div>
-
-<div class="card">
-  <h2><span class="n">6</span>And remember what the comparison is for</h2>
-  <p>Even done correctly, a two-group mean difference is not the deliverable. The decision is a flagging threshold, and a single cutoff means different things per channel: a value of 3 is the 90th percentile of one channel and the 30th of another. The mean difference is a description. The per-channel exceedance is the policy.</p>
-</div>
-
-<footer>Synthetic data, generated in your browser with a fixed seed. No client data is used or transmitted.<br>Ian Helfrich, Ph.D.</footer>
-</div>
-
-<script>
-function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
-  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-function makeNormal(rng){let s=true,z2=0;return function(){if(!s){s=true;return z2;}
-  let u=Math.max(rng(),1e-12),v=rng();let r=Math.sqrt(-2*Math.log(u));
-  z2=r*Math.sin(2*Math.PI*v);s=false;return r*Math.cos(2*Math.PI*v);};}
-function normcdf(x){const t=1/(1+0.2316419*Math.abs(x));const d=0.3989423*Math.exp(-x*x/2);
-  let p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return x>0?1-p:p;}
-function fmtP(p){if(p<=0||p<1e-300)return "< 1e-300";if(p<1e-4)return p.toExponential(1);return p.toFixed(4);}
-
-const sigA=0.85, sigB=1.05, meanA=1.3;
-function gen(nA,nB,gap){
-  const rng=mulberry32(20240701); const N=makeNormal(rng);
-  const muA=Math.log(meanA)-sigA*sigA/2;
-  const meanB=meanA+gap; const muB=Math.log(Math.max(meanB,1e-3))-sigB*sigB/2;
-  const A=new Array(nA), B=new Array(nB);
-  for(let i=0;i<nA;i++) A[i]=Math.exp(muA+sigA*N());
-  for(let i=0;i<nB;i++) B[i]=Math.exp(muB+sigB*N());
-  return [A,B];
-}
-function stats(x){let m=0;for(const v of x)m+=v;m/=x.length;
-  let s=0;for(const v of x)s+=(v-m)*(v-m);s/=(x.length-1);return[m,s];}
-const $=id=>document.getElementById(id);
-
-function draw(A,B){
-  const c=$("hist"), ctx=c.getContext("2d"); const W=c.width,H=c.height; ctx.clearRect(0,0,W,H);
-  const hi=30, bins=48, bw=hi/bins;
-  const hA=new Array(bins).fill(0), hB=new Array(bins).fill(0); const cap=x=>Math.min(bins-1,Math.floor(x/bw));
-  for(const v of A) if(v<hi) hA[cap(v)]++;
-  for(const v of B) if(v<hi) hB[cap(v)]++;
-  // normalize to density so unequal n compare fairly
-  const dA=hA.map(v=>v/A.length), dB=hB.map(v=>v/B.length);
-  const mx=Math.max(...dA,...dB,1e-9); const bx=W/bins, base=H-18;
-  const bar=(h,col)=>{ctx.globalAlpha=0.55;ctx.fillStyle=col;
-    for(let i=0;i<bins;i++){const bh=(h[i]/mx)*(H-30);ctx.fillRect(i*bx,base-bh,bx-1,bh);}};
-  bar(dA,"#12233b"); bar(dB,"#b4532a"); ctx.globalAlpha=1;
-  ctx.fillStyle="#8a8f98";ctx.font="11px -apple-system,sans-serif";
-  for(let g=0;g<=hi;g+=5){const px=(g/hi)*W;ctx.fillText(g,px+2,H-4);}
-}
-
-function update(){
-  const nA=+$("n").value, ratio=+$("r").value, gap=+$("g").value;
-  const nB=Math.max(30,Math.round(nA*ratio));
-  $("nOut").textContent=nA.toLocaleString();
-  $("rOut").textContent=ratio.toFixed(1)+"×  (n="+nB.toLocaleString()+")";
-  $("gOut").textContent=gap.toFixed(1);
-  const [A,B]=gen(nA,nB,gap);
-  const [mA,vA]=stats(A), [mB,vB]=stats(B); const b1=mB-mA;
-  const sp2=((nA-1)*vA+(nB-1)*vB)/(nA+nB-2);
-  const sePool=Math.sqrt(sp2*(1/nA+1/nB));
-  const seWelch=Math.sqrt(vA/nA+vB/nB);
-  const pPool=2*(1-normcdf(Math.abs(b1/sePool))), pWelch=2*(1-normcdf(Math.abs(b1/seWelch)));
-  $("b1a").textContent=b1.toFixed(3); $("b1b").textContent=b1.toFixed(3);
-  $("sea").textContent=sePool.toFixed(4); $("seb").textContent=seWelch.toFixed(4);
-  $("ta").textContent=(b1/sePool).toFixed(1); $("tb").textContent=(b1/seWelch).toFixed(1);
-  $("pa").textContent=fmtP(pPool); $("pb").textContent=fmtP(pWelch);
-  $("ci").textContent="["+(b1-1.96*seWelch).toFixed(3)+", "+(b1+1.96*seWelch).toFixed(3)+"]";
-
-  const seGap=100*Math.abs(sePool-seWelch)/seWelch;
-  if(ratio>0.92 && ratio<1.08)
-    $("vSE").innerHTML="Group sizes are equal, so the pooled and Welch SEs <b>coincide</b> (that is algebra, not luck). Drag the size ratio off 1 to make them separate.";
-  else
-    $("vSE").innerHTML="Group sizes differ, so the default pooled SE and the Welch/HC2 SE now disagree by <b>"+seGap.toFixed(0)+"%</b>. The pooled one (the lm default) is the wrong number here.";
-  if(gap<0.15)
-    $("vP").innerHTML="The true gap is <b>zero</b>, yet the p-value can still be tiny at large n. That is the sample size, not a real effect.";
-  else if(nA>=15000)
-    $("vP").innerHTML="p is <b>effectively zero</b> in both rows. At this n it always is. The finding is b1 = "+b1.toFixed(2)+" and its interval, never the p-value.";
-  else
-    $("vP").innerHTML="Raise the sample size and watch p collapse while b1 = "+b1.toFixed(2)+" barely moves. Significance tracks n, not importance.";
-  draw(A,B);
-}
-["n","r","g"].forEach(id=>$(id).addEventListener("input",update));
-update();
-</script>
 </body>
 </html>

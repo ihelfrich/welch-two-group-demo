@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How extreme is a value?</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ how extreme is a value?</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Extremeness</div>
+  <h1>How extreme is a value?</h1>
+  <p class="sub">It is a percentile, not a QQ plot, and the percentile depends entirely on the channel. The same value sits deep in the tail of one distribution and in the body of another. Drag the value and watch where it lands in each.</p>
+</header>
+
+<div class="card">
+  <h2><span class="n">1</span>Pick a value</h2>
+  <div class="controls"><div class="ctrl">
+    <label>Value of interest <b id="vOut"></b></label>
+    <input id="v" type="range" min="0" max="40" step="0.1" value="3">
+  </div></div>
+  <canvas id="dens" width="880" height="330"></canvas>
+  <table>
+    <thead><tr><th>channel</th><th>percentile of the value [95% CI]</th><th>reading</th></tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div class="verdict"><div class="row" id="v1"></div><div class="row" id="v2"></div></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>Why not a QQ plot</h2>
+  <p>A QQ plot tells you the <em>shape</em> of a distribution, whether it is normal, skewed, or heavy-tailed. It does not tell you where one specific value sits. The extremeness of a value is simply how much of the data falls at or below it, its percentile on that group's own empirical distribution, reported with a confidence interval because it is a proportion. That interval is a Wilson interval, which behaves near 0 and 1 where a value can be genuinely rare.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>The consequence</h2>
+  <p>Because the percentile is channel-specific, so is any decision built on it. A z-score would hide this: standardizing gives one number, but a fixed z maps to different percentiles under different shapes, so it is not comparable across channels. Report the percentile on each channel's own distribution, and let "top 5%" mean the same thing everywhere.</p>
+</div>
+
+<footer><a href="index.html">← all notes</a> &nbsp;·&nbsp; Synthetic data, generated in your browser. Ian Helfrich, Ph.D.</footer>
+</div>
+
+<script src="lib.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const CH = channels(3000);
+const XMAX=40;
+const cv=$("dens"), ctx=cv.getContext("2d");
+const W=cv.width,H=cv.height, mL=8,mR=8,mT=8,mB=22;
+const rowH=(H-mT-mB)/CH.length;
+const px=x=>mL+(x/XMAX)*(W-mL-mR);
+
+// precompute histograms per channel (density, clipped to XMAX)
+const BINS=70, bw=XMAX/BINS;
+CH.forEach(c=>{ const h=new Array(BINS).fill(0); let inr=0;
+  for(const val of c.data){ if(val<XMAX){ h[Math.min(BINS-1,Math.floor(val/bw))]++; inr++; } }
+  const mx=Math.max(...h,1); c.hist=h.map(z=>z/mx);
+});
+
+function drawBase(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=PAL.dim;ctx.font="11px -apple-system,sans-serif";
+  for(let x=0;x<=XMAX;x+=5){ctx.fillText(x,px(x)-3,H-6);}
+  CH.forEach((c,r)=>{
+    const top=mT+r*rowH, base=top+rowH-8;
+    // baseline
+    ctx.strokeStyle="#eee7db";ctx.beginPath();ctx.moveTo(mL,base);ctx.lineTo(W-mR,base);ctx.stroke();
+    // histogram
+    ctx.fillStyle=c.color;ctx.globalAlpha=.5;
+    const bx=(W-mL-mR)/BINS;
+    c.hist.forEach((z,i)=>{const bh=z*(rowH-16);ctx.fillRect(mL+i*bx,base-bh,bx-1,bh);});
+    ctx.globalAlpha=1;
+    ctx.fillStyle=c.color;ctx.font="12px -apple-system,sans-serif";
+    ctx.fillText(c.name, mL+2, top+12);
+  });
+}
+function update(){
+  const v=+$("v").value; $("vOut").textContent=v.toFixed(1);
+  drawBase();
+  // vertical value line across all rows
+  ctx.strokeStyle=PAL.gold;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(px(v),mT);ctx.lineTo(px(v),H-mB);ctx.stroke();ctx.setLineDash([]);
+  let rows="";
+  CH.forEach((c,r)=>{
+    const n=c.data.length; let k=0; for(const val of c.data) if(val<=v) k++;
+    const [lo,ph,hi]=wilson(k,n);
+    // annotate percentile at the row
+    const top=mT+r*rowH;
+    ctx.fillStyle=c.color;ctx.font="bold 12px -apple-system,sans-serif";
+    ctx.fillText(pct(ph)+" pctile", W-96, top+12);
+    const flag=1-ph;
+    const reading = ph>=0.9 ? `deep in the tail (top ${pct(flag)})`
+                  : ph>=0.6 ? `above typical`
+                  : ph>=0.35 ? `around the middle`
+                  : `in the body (bottom ${pct(ph)})`;
+    rows+=`<tr><td><b style="color:${c.color}">${c.name}</b></td><td>${pct(ph)} &nbsp;[${pct(lo)}, ${pct(hi)}]</td><td>${reading}</td></tr>`;
+  });
+  $("tbody").innerHTML=rows;
+  let kt=0; for(const val of CH[0].data) if(val<=v) kt++;
+  let kd=0; for(const val of CH[1].data) if(val<=v) kd++;
+  const pt=kt/CH[0].data.length, pd=kd/CH[1].data.length;
+  $("v1").innerHTML=`A value of <b>${v.toFixed(1)}</b> is the <b>${pct(pt)}</b> percentile in ${CH[0].name} but the <b>${pct(pd)}</b> percentile in ${CH[1].name}.`;
+  $("v2").innerHTML = (pt>0.8 && pd<0.5)
+    ? "Extreme for one channel, ordinary for another. There is no single answer to how extreme it is."
+    : "Slide toward the low end and the ordering of who finds it extreme can flip.";
+}
+$("v").addEventListener("input",update);
+update();
+</script>
+</body>
+</html>

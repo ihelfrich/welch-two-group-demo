@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to read a QQ plot</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .shapes{display:flex;flex-wrap:wrap;gap:.5rem;margin:.4rem 0 1rem}
+  .shapes button{font:inherit;font-size:.9rem;padding:.4rem .8rem;border-radius:20px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  .shapes button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .panes{display:grid;grid-template-columns:1fr;gap:.6rem}
+  @media(min-width:640px){.panes{grid-template-columns:1fr 1fr}}
+  .paneTitle{font-size:.8rem;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;margin:.2rem 0 -.2rem}
+</style>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ how to read a QQ plot</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Diagnostics</div>
+  <h1>How to read a QQ plot</h1>
+  <p class="sub">A QQ plot compares your data's shape to a normal. Points on the diagonal mean normal. The way the points bend tells you how the shape departs from it. Switch the underlying distribution and watch the signature change.</p>
+</header>
+
+<div class="card">
+  <h2><span class="n">1</span>Pick a distribution</h2>
+  <div class="shapes" id="shapes"></div>
+  <div class="panes">
+    <div><div class="paneTitle">the sample</div><canvas id="hist" width="430" height="300"></canvas></div>
+    <div><div class="paneTitle">its normal QQ plot</div><canvas id="qq" width="430" height="300"></canvas></div>
+  </div>
+  <div class="verdict"><div class="row" id="sig"></div></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>The vocabulary</h2>
+  <ul>
+    <li><b>On the line.</b> The data is close to normal.</li>
+    <li><b>Convex, bending up.</b> Right-skewed: the high tail is longer than normal.</li>
+    <li><b>Concave, bending down.</b> Left-skewed: the low tail is longer.</li>
+    <li><b>S-shaped, both ends peeling off.</b> Heavy tails: extremes are more common than normal.</li>
+    <li><b>A flat step in the middle.</b> More than one mode.</li>
+  </ul>
+  <p>All of these are statements about <em>shape</em>. Notice what a QQ plot does not do: it will not tell you where a single value like 3 sits. That is a percentile, on a different page.</p>
+</div>
+
+<footer><a href="index.html">← all notes</a> &nbsp;·&nbsp; Synthetic data, generated in your browser. Ian Helfrich, Ph.D.</footer>
+</div>
+
+<script src="lib.js"></script>
+<script>
+function qnorm(p){
+  const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.3577518672690,-30.66479806614716,2.506628277459239];
+  const b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572];
+  const c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783];
+  const d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416];
+  const pl=0.02425,ph=1-pl;let q,r;
+  if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+  if(p<=ph){q=p-0.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+  q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+}
+const SHAPES=[
+  {key:"normal", label:"Normal", sig:"<b>On the line.</b> The points hug the diagonal. This is the reference: a normal distribution."},
+  {key:"right", label:"Right-skewed", sig:"<b>Convex, bending up.</b> The upper points pull above the line: the right tail is longer than a normal's."},
+  {key:"left", label:"Left-skewed", sig:"<b>Concave, bending down.</b> The lower points fall below the line: the left tail is the long one."},
+  {key:"heavy", label:"Heavy-tailed", sig:"<b>S-shaped.</b> Both ends peel away from the line: extremes in both directions are more common than normal."},
+  {key:"bimodal", label:"Bimodal", sig:"<b>A flat step through the middle.</b> Two modes show up as a plateau where the points cross the center, not a single clean slope."},
+];
+function sample(key){
+  const rng=mulberry32(7); const N=makeNormal(rng); const n=400; const out=[];
+  const chi=k=>{let s=0;for(let i=0;i<k;i++){const z=N();s+=z*z;}return s;};
+  for(let i=0;i<n;i++){
+    let v;
+    if(key==="normal") v=N();
+    else if(key==="right") v=Math.exp(0.9*N());
+    else if(key==="left") v=-Math.exp(0.9*N());
+    else if(key==="heavy") v=N()/Math.sqrt(chi(4)/4);      // t with 4 df
+    else v=(rng()<0.5?-2.3:2.3)+N()*0.7;                   // bimodal
+    out.push(v);
+  }
+  const m=mean(out), sd=Math.sqrt(variance(out));
+  return out.map(x=>(x-m)/sd);                             // standardized
+}
+const $=id=>document.getElementById(id);
+let cur="right";
+$("shapes").innerHTML=SHAPES.map(s=>`<button data-k="${s.key}">${s.label}</button>`).join("");
+$("shapes").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{cur=b.dataset.k;render();}));
+
+function drawHist(x){
+  const c=$("hist"),ctx=c.getContext("2d");const W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+  const lo=-4,hi=4,BINS=40,bw=(hi-lo)/BINS;const h=new Array(BINS).fill(0);
+  for(const v of x){if(v>=lo&&v<hi)h[Math.floor((v-lo)/bw)]++;}
+  const mx=Math.max(...h,1),bx=W/BINS,base=H-22;
+  ctx.fillStyle=PAL.violet;ctx.globalAlpha=.55;
+  h.forEach((z,i)=>{const bh=z/mx*(H-40);ctx.fillRect(i*bx,base-bh,bx-1,bh);});
+  ctx.globalAlpha=1;ctx.fillStyle=PAL.dim;ctx.font="11px -apple-system,sans-serif";
+  for(let t=-4;t<=4;t+=2){ctx.fillText(t,(t-lo)/(hi-lo)*W-3,H-6);}
+}
+function drawQQ(x){
+  const c=$("qq"),ctx=c.getContext("2d");const W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+  const m=28,lo=-3.2,hi=3.2;const sc=t=>({X:m+(t-lo)/(hi-lo)*(W-2*m),Y:H-m-(t-lo)/(hi-lo)*(H-2*m)});
+  // reference line y=x
+  ctx.strokeStyle="#d9d2c6";ctx.lineWidth=1.5;const a=sc(lo),b=sc(hi);
+  ctx.beginPath();ctx.moveTo(a.X,a.Y);ctx.lineTo(b.X,b.Y);ctx.stroke();
+  // axes ticks
+  ctx.fillStyle=PAL.dim;ctx.font="11px -apple-system,sans-serif";
+  for(let t=-3;t<=3;t+=1){const p=sc(t);ctx.fillText(t,p.X-3,H-8);ctx.fillText(t,4,p.Y+3);}
+  // points
+  const s=x.slice().sort((u,v)=>u-v),n=s.length;
+  ctx.fillStyle=PAL.ink;
+  for(let i=0;i<n;i++){const th=qnorm((i+0.5)/n);const p=sc(Math.max(lo,Math.min(hi,th)));
+    const yy=Math.max(lo,Math.min(hi,s[i]));const q=sc(yy);
+    ctx.globalAlpha=.6;ctx.beginPath();ctx.arc(p.X,q.Y,2.2,0,7);ctx.fill();}
+  ctx.globalAlpha=1;
+}
+function render(){
+  $("shapes").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.k===cur));
+  const x=sample(cur); drawHist(x); drawQQ(x);
+  $("sig").innerHTML=SHAPES.find(s=>s.key===cur).sig;
+}
+render();
+</script>
+</body>
+</html>
