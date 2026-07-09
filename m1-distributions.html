@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
 <style>
   .qc-bar{display:none}
 </style>
@@ -19,6 +25,16 @@
   <h1>Distributions &amp; the shape of data</h1>
   <p class="sub">Every statistic in this guide is a summary of a distribution. Before any test or model, you need to be able to see one, describe one by hand, and know when its shape breaks the tools built for a bell curve.</p>
 </header>
+
+<!-- HERO3D_START -->
+<div class="card hero3d">
+  <p class="hero-kicker">Live scene · orbit with your mouse or finger</p>
+  <div class="hero-host" id="hero-m1-host"></div>
+  <p class="hero-hint">Two independent variables, each with its own small set of outcomes: the die-game payout from Part 1 (-2, 10, 100 dollars) on one axis, an illustrative traffic channel (Search, Social, Direct) on the other. Drag to orbit; each bar's height is a joint probability.</p>
+  <div class="hero-readout" id="hero-m1-readout"></div>
+  <p class="hero-caption">A single-variable PMF is a bar chart on a line: one axis for the outcome, one for probability. A joint distribution over two variables needs two axes just to name the outcome pair $(x,y)$, plus a third for probability, which is exactly why it's the first genuinely 3D object in this course. Because payout and channel are independent here, each bar's height is simply $P(X=x)\cdot P(Y=y)$, the product of the two marginals, not a number that had to be measured jointly.</p>
+</div>
+<!-- HERO3D_END -->
 
 <!-- MODULE_BODY_START -->
 <div class="card">
@@ -127,5 +143,6 @@ normal &lt;- <span class="k">rnorm</span>(n, mean = 0, sd = 1)
 <script src="problems.js"></script>
 <script src="render.js"></script>
 <script>renderQuickCheck(document.getElementById("qc"), ["pmfmv","zscore_calc","emprule"], 8801);</script>
+<script type="module" src="hero-m1.js"></script>
 </body>
 </html>

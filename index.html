@@ -13,6 +13,12 @@
   .sectiontag{font-size:.78rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
     color:var(--dim);margin:2rem 0 .4rem}
 </style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">a working study guide</span></nav>
@@ -22,6 +28,15 @@
   <h1>Applied statistics &amp; econometrics, from the ground up</h1>
   <p class="sub">Five modules, each in two halves: the math worked by hand with a pencil, and the same idea run for real in R with verified output. Every module ends with checked practice problems that generate fresh numbers every time. The running example throughout is a skewed, multi-channel volume score, so the methods stay attached to a real applied problem instead of floating free as formulas.</p>
 </header>
+
+<!-- HERO3D_START -->
+<div class="card hero3d">
+  <p class="hero-kicker">Live scene · orbit with your mouse or finger, then click a node</p>
+  <div class="hero-host" id="hero-hub-host"></div>
+  <p class="hero-hint">Click a node to jump to that module, or scroll down for the full list.</p>
+  <p class="hero-caption">The five modules, ink through violet in course order, arranged as an orbitable arc. The list of the same five modules is right below with full descriptions; the scene is a second way in, not a replacement for it.</p>
+</div>
+<!-- HERO3D_END -->
 
 <div class="sectiontag">The course</div>
 <div class="grid">
@@ -95,5 +110,7 @@
 
 <footer>Synthetic data throughout, generated in your browser. No real client data is used or transmitted.<br>Ian Helfrich, Ph.D.</footer>
 </div>
+
+<script type="module" src="hero-hub.js"></script>
 </body>
 </html>

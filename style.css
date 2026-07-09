@@ -57,3 +57,18 @@ a.tile .k{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.
   text-transform:uppercase;color:var(--rust);margin-bottom:.5rem}
 @media(min-width:640px){ .controls.two{grid-template-columns:1fr 1fr}
   .controls.three{grid-template-columns:1fr 1fr 1fr} }
+
+/* 3D hero scenes -- one visual anchor per module, above the numbered cards */
+.card.hero3d{padding:1.1rem 1.1rem 1.3rem}
+.hero3d .hero-kicker{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--gold);margin:0 0 .3rem}
+.hero3d .hero-host{width:100%;border-radius:10px;overflow:hidden;background:var(--paper);
+  touch-action:pan-y}
+.hero3d .hero-host canvas{display:block}
+.hero3d .hero-hint{font-size:.78rem;color:var(--dim);margin:.5rem 0 0;text-align:center}
+.hero3d .hero-caption{font-size:.94rem;margin:.7rem 0 0}
+.hero3d .hero-readout{display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;margin:.6rem 0 0;
+  font-size:.86rem;color:var(--ink);font-variant-numeric:tabular-nums}
+.hero3d .hero-readout b{color:var(--rust)}
+.hero3d .hero-fallback{display:flex;align-items:center;justify-content:center;min-height:260px;
+  background:#f4f1ea;border-radius:10px;color:var(--dim);font-size:.92rem;text-align:center;padding:1.5rem}

@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 2 of 5 · estimation &amp; the CLT</span></nav>
@@ -16,6 +22,16 @@
   <h1>Estimation, the CLT &amp; confidence intervals</h1>
   <p class="sub">A sample mean is a guess. The Central Limit Theorem is the reason you can attach a margin of error to that guess, even when the data itself looks nothing like a bell curve.</p>
 </header>
+
+<!-- HERO3D_START -->
+<div class="card hero3d">
+  <p class="hero-kicker">Live scene · orbit with your mouse or finger</p>
+  <div class="hero-host" id="hero-m2-host"></div>
+  <p class="hero-hint">A fresh sample of 30 draws from a right-skewed population lands roughly ten times a second. Each sphere is one sample's mean, stacking into its bin by value with a small jitter so a new arrival stays visible on its own instead of blurring into a growing bar. Drag to orbit; after a couple hundred samples the histogram runs out and holds, then clears and starts again.</p>
+  <div class="hero-readout" id="hero-m2-readout"></div>
+  <p class="hero-caption">The population feeding this scene is lognormal(0,1), the same generator Part 3 draws from with <span class="mono">rlnorm()</span>. No single sample mean lands anywhere near a bell shape on its own. Piled up by the hundreds, they crystallize into one anyway, centered on the gold line at the true population mean and spread by almost exactly the theoretical standard error next to it, the CLT happening in front of you rather than asserted in a formula.</p>
+</div>
+<!-- HERO3D_END -->
 
 <!-- MODULE_BODY_START -->
 <div class="card">
@@ -168,5 +184,6 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="problems.js"></script>
 <script src="render.js"></script>
 <script>renderQuickCheck(document.getElementById("qc"), ["se_clt","n_precision","ci_manual"], 8802);</script>
+<script type="module" src="hero-m2.js"></script>
 </body>
 </html>

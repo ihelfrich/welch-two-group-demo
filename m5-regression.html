@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 5 of 5 · regression</span></nav>
@@ -16,6 +22,16 @@
   <h1>Regression &amp; causal thinking</h1>
   <p class="sub">Two formulas fit any line. The real content of a regression is what its coefficient means, when a categorical predictor makes it a group comparison in disguise, and whether the line you fit is even entitled to a causal reading.</p>
 </header>
+
+<!-- HERO3D_START -->
+<div class="card hero3d">
+  <p class="hero-kicker">Live scene · orbit with your mouse or finger</p>
+  <div class="hero-host" id="hero-m5-host"></div>
+  <p class="hero-hint">A simple regression fits a line. Add a second predictor, here a 0/1 channel flag, and the fitted object becomes a plane. Drag to orbit; the plane keeps its shape from every angle, which is the whole point.</p>
+  <div class="hero-readout" id="hero-m5-readout"></div>
+  <p class="hero-caption">The gold plane is the least-squares fit of <span class="mono">VolatilityScore ~ exchanges + channel</span>. Slice it at any fixed exchange count and the two channels sit exactly $b_2$ apart, a constant vertical gap regardless of $x$: the geometric picture of the dummy-variable result Part 2 derives algebraically.</p>
+</div>
+<!-- HERO3D_END -->
 
 <!-- MODULE_BODY_START -->
 <div class="card">
@@ -191,5 +207,6 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="problems.js"></script>
 <script src="render.js"></script>
 <script>renderQuickCheck(document.getElementById("qc"), ["olsslope","rsquared","olsresid","b1mean","r2_mc","exogeneity_mc"], 8805);</script>
+<script type="module" src="hero-m5.js"></script>
 </body>
 </html>

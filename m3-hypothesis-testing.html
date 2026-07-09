@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 3 of 5 · hypothesis testing</span></nav>
@@ -16,6 +22,20 @@
   <h1>Hypothesis testing, done right</h1>
   <p class="sub">Five parts, always in the same order, and one number, the p-value, that gets misread more than any other in applied work. This module builds the t-test from scratch and gives you the vocabulary to say precisely what a test result does and does not mean.</p>
 </header>
+
+<!-- HERO3D_START -->
+<div class="card hero3d">
+  <p class="hero-kicker">Live scene · orbit with your mouse or finger</p>
+  <div class="hero-host" id="hero-m3-host"></div>
+  <div class="controls"><div class="ctrl">
+    <label>Two-sided threshold, heads out of 20 <b id="hero-m3-k"></b></label>
+    <input id="hero-m3-slider" type="range" min="0" max="20" step="1" value="15">
+  </div></div>
+  <p class="hero-hint">Twenty-one bars, one per possible head count out of 20 fair flips, height equal to its exact binomial probability. Drag the slider to move the two-sided threshold: sage bars are no more extreme than it, rust bars make up the rejection region in both tails. Orbit to a side view for the familiar flat histogram, or to an angle to see the bars as the physical blocks they actually are.</p>
+  <div class="hero-readout" id="hero-m3-readout"></div>
+  <p class="hero-caption">This is the same binomial(20, 0.5) distribution behind the coin widget in Part 1, computed the same way, $C(20,k)\cdot 0.5^{20}$ for every $k$, and printing the identical two-sided p-value for any threshold dialed in on either widget. The third dimension doesn't change the math. It lets you walk around a probability mass function and watch, block by block, how little material is left out at the tails.</p>
+</div>
+<!-- HERO3D_END -->
 
 <!-- MODULE_BODY_START -->
 <div class="card">
@@ -205,5 +225,6 @@ document.addEventListener("DOMContentLoaded", function(){
 <script src="problems.js"></script>
 <script src="render.js"></script>
 <script>renderQuickCheck(document.getElementById("qc"), ["ttest","welch","welcheq","mw","ci_ttest_link","clt_mc"], 8803);</script>
+<script type="module" src="hero-m3.js"></script>
 </body>
 </html>

@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 <script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 <nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 4 of 5 · bayes</span></nav>
@@ -16,6 +22,20 @@
   <h1>Bayes: updating a belief with evidence</h1>
   <p class="sub">Evidence updates a belief, it does not replace it. A good test pointed at a rare event still leaves you mostly uncertain, and the base rate is the reason why. This module proves the theorem in three lines and then puts it to work on a flagging rule.</p>
 </header>
+
+<!-- HERO3D_START -->
+<div class="card hero3d">
+  <p class="hero-kicker">Live scene · orbit with your mouse or finger</p>
+  <div class="hero-host" id="hero-m4-host"></div>
+  <div class="controls"><div class="ctrl">
+    <label>Isolate the tested-positive group <b id="hero-m4-toggle-state">off</b></label>
+    <input id="hero-m4-toggle" type="checkbox">
+  </div></div>
+  <p class="hero-hint">10,000 people, one small box each, drawn from the same two coin flips as Part 3's simulation: prevalence 1%, sensitivity 95%, false-positive rate 4%. The roughly 100 who have the condition float on a raised layer above the roughly 9,900 who don't; color then splits each layer by test result. Orbit to see the raised layer thin to a speckle, or check the box to hide everyone who tested negative and watch the true positives shrink to a handful against the false alarms.</p>
+  <div class="hero-readout" id="hero-m4-readout"></div>
+  <p class="hero-caption">This is Part 1's 10,000-person table rebuilt as an actual population, drawn fresh in your browser on page load rather than copied from the table above. The counts above will land close to Part 1's 100/9,900/95/396 split and to its 19.3% but not exactly on them, because this is one new random draw, not the same draw the table describes.</p>
+</div>
+<!-- HERO3D_END -->
 
 <!-- MODULE_BODY_START -->
 <div class="card">
@@ -116,5 +136,6 @@ n_flagged_sick / n_flagged
 <script src="problems.js"></script>
 <script src="render.js"></script>
 <script>renderQuickCheck(document.getElementById("qc"), ["bayes","bayesodds","bayes_flag"], 8804);</script>
+<script type="module" src="hero-m4.js"></script>
 </body>
 </html>
