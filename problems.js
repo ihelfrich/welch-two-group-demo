@@ -191,6 +191,175 @@ const PROBLEMS = [
     };}
 },
 
+// ---------------------------------------------------------------- distributions
+{ id:"pmfmv", topic:"Distributions", kind:"numeric", title:"Mean and variance from a PMF",
+  make(seed){ const rng=mulberry32(seed);
+    const allX=[-3,-2,-1,0,1,2,3,4,5]; const xs=[]; const pool=allX.slice();
+    for(let i=0;i<4;i++){ const j=ri(rng,0,pool.length-1); xs.push(pool.splice(j,1)[0]); }
+    xs.sort((a,b)=>a-b);
+    const cuts=[]; while(cuts.length<3){ const c=ri(rng,1,19); if(!cuts.includes(c)) cuts.push(c); }
+    cuts.sort((a,b)=>a-b);
+    const w=[cuts[0], cuts[1]-cuts[0], cuts[2]-cuts[1], 20-cuts[2]];
+    const probs=w.map(v=>v/20);
+    const Ex=sm(xs.map((x,i)=>x*probs[i]));
+    const Ex2=sm(xs.map((x,i)=>x*x*probs[i]));
+    const Vx=Ex2-Ex*Ex;
+    const rows=xs.map((x,i)=>`<tr><td>x = ${x}</td><td>P(X=x) = ${probs[i].toFixed(2)}</td></tr>`).join("");
+    return {
+      promptHTML:`A discrete random variable X has this distribution:<table class="mini"><tbody>${rows}</tbody></table><p>Compute $E[X]$ and $\\mathrm{Var}(X)$. Recall $\\mathrm{Var}(X)=E[X^2]-(E[X])^2$.</p>`,
+      fields:[{key:"e",label:"E[X]",ans:Ex,tolAbs:0.03},{key:"v",label:"Var(X)",ans:Vx,tolAbs:0.05}],
+      solutionHTML:`E[X] = ${xs.map((x,i)=>`(${x})(${probs[i].toFixed(2)})`).join(" + ")} = <b>${r2(Ex)}</b>.<br>
+        E[X²] = ${xs.map((x,i)=>`(${x*x})(${probs[i].toFixed(2)})`).join(" + ")} = ${r2(Ex2)}.<br>
+        Var(X) = E[X²] − (E[X])² = ${r2(Ex2)} − ${r2(Ex)}² = <b>${r2(Vx)}</b>. Every mean and variance in the rest of this guide is this same weighted sum, just over a continuum instead of four points.`
+    };}
+},
+
+{ id:"zscore_calc", topic:"Distributions", kind:"numeric", title:"Standardizing a value",
+  make(seed){ const rng=mulberry32(seed);
+    const mu=ri(rng,20,80), sig=ri(rng,4,12); const k=[-2,-1.5,-1,-0.5,0.5,1,1.5,2][ri(rng,0,7)];
+    const x=r1(mu+k*sig); const z=(x-mu)/sig;
+    return {
+      promptHTML:`A distribution has mean $\\mu=${mu}$ and standard deviation $\\sigma=${sig}$. Standardize $x=${x}$: compute $z=(x-\\mu)/\\sigma$.</p>`,
+      fields:[{key:"z",label:"z",ans:z,tolAbs:0.03}],
+      solutionHTML:`z = (${x} − ${mu}) / ${sig} = <b>${r2(z)}</b>. A z-score gives a tail probability only when the underlying distribution is (approximately) normal; on skewed data the same z corresponds to a different percentile.`
+    };}
+},
+
+{ id:"emprule", topic:"Distributions", kind:"numeric", title:"The 95% interval",
+  make(seed){ const rng=mulberry32(seed);
+    const mu=ri(rng,50,150), sig=ri(rng,5,20); const lo=mu-1.96*sig, hi=mu+1.96*sig;
+    return {
+      promptHTML:`X is approximately normal with mean $\\mu=${mu}$ and standard deviation $\\sigma=${sig}$. Give the interval that contains the middle 95% of the distribution: $\\mu \\pm 1.96\\sigma$.</p>`,
+      fields:[{key:"lo",label:"lower",ans:lo,tolAbs:0.5},{key:"hi",label:"upper",ans:hi,tolAbs:0.5}],
+      solutionHTML:`${mu} − 1.96(${sig}) = <b>${r1(lo)}</b>, and ${mu} + 1.96(${sig}) = <b>${r1(hi)}</b>. This is where 1.96 in every confidence interval formula comes from: it is the z that cuts off the middle 95% of a normal.`
+    };}
+},
+
+// ---------------------------------------------------------------- CLT / CI
+{ id:"se_clt", topic:"CLT/CI", kind:"numeric", title:"Standard error of the mean",
+  make(seed){ const rng=mulberry32(seed);
+    const sig=ri(rng,4,20), n=[16,25,36,64,100,400][ri(rng,0,5)]; const se=sig/Math.sqrt(n);
+    return {
+      promptHTML:`A population has standard deviation $\\sigma=${sig}$. For a sample of size $n=${n}$, compute the standard error of the mean, $SE=\\sigma/\\sqrt{n}$.</p>`,
+      fields:[{key:"se",label:"SE",ans:se,tolRel:0.02}],
+      solutionHTML:`SE = ${sig}/√${n} = ${sig}/${Math.sqrt(n)} = <b>${r2(se)}</b>. This is why more data narrows an estimate slowly: SE shrinks with $\\sqrt n$, not $n$.`
+    };}
+},
+
+{ id:"n_precision", topic:"CLT/CI", kind:"numeric", title:"Quadrupling n",
+  make(seed){ const rng=mulberry32(seed);
+    const n=[10,20,25,40,50,80][ri(rng,0,5)]; const need=4*n;
+    return {
+      promptHTML:`A sample of $n=${n}$ gives a standard error $SE_0$. Because $SE\\propto 1/\\sqrt n$, what sample size is needed to cut the standard error in <b>half</b>?</p>`,
+      fields:[{key:"n",label:"required n",ans:need,tolAbs:0.5}],
+      solutionHTML:`Halving SE means $\\sqrt n$ must double, so $n$ must quadruple: $4\\times ${n} = $ <b>${need}</b>. This is the sqrt(n) law: to cut your margin of error in half, you need four times the data, not two.`
+    };}
+},
+
+{ id:"ci_manual", topic:"CLT/CI", kind:"numeric", title:"Building a 95% CI",
+  make(seed){ const rng=mulberry32(seed);
+    const xbar=rf(rng,10,60,1), s=ri(rng,3,15), n=[36,49,64,100,150][ri(rng,0,4)];
+    const se=s/Math.sqrt(n), margin=1.96*se, lo=xbar-margin, hi=xbar+margin;
+    return {
+      promptHTML:`A sample of $n=${n}$ has mean $\\bar x=${xbar}$ and sd $s=${s}$. Using $z=1.96$ (valid at this $n$), give the margin of error and the 95% CI endpoints.</p>`,
+      fields:[{key:"m",label:"margin",ans:margin,tolRel:0.02},{key:"lo",label:"lower",ans:lo,tolRel:0.02},{key:"hi",label:"upper",ans:hi,tolRel:0.02}],
+      solutionHTML:`SE = ${s}/√${n} = ${r2(se)}. Margin = 1.96 × ${r2(se)} = <b>${r2(margin)}</b>. CI = ${xbar} ± ${r2(margin)} = [<b>${r2(lo)}</b>, <b>${r2(hi)}</b>]. A value $\\mu_0$ outside this interval is exactly the set of values a two-sided test at $\\alpha=0.05$ would reject.`
+    };}
+},
+
+// ---------------------------------------------------------------- more t-test / OLS / Bayes
+{ id:"ci_ttest_link", topic:"t-test", kind:"numeric", title:"Test and CI, the same information",
+  make(seed){ const rng=mulberry32(seed);
+    const mu0=ri(rng,90,110), n=[36,49,64,100][ri(rng,0,3)]; const s=ri(rng,8,16);
+    const xbar=mu0+[-1,1][ri(rng,0,1)]*rf(rng,3,8,1);
+    const se=s/Math.sqrt(n), t=(xbar-mu0)/se, lo=xbar-1.96*se, hi=xbar+1.96*se;
+    return {
+      promptHTML:`Test $H_0: \\mu=${mu0}$ against a sample with $n=${n}$, $\\bar x=${r1(xbar)}$, $s=${s}$. Compute the $t$ statistic (using $z\\approx t$ at this $n$), then the 95% CI for $\\mu$. Confirm ${mu0} falls ${Math.abs(t)>1.96?"outside":"inside"} it.</p>`,
+      fields:[{key:"t",label:"t",ans:t,tolRel:0.03},{key:"lo",label:"CI lower",ans:lo,tolRel:0.02},{key:"hi",label:"CI upper",ans:hi,tolRel:0.02}],
+      solutionHTML:`t = (${r1(xbar)} − ${mu0})/(${s}/√${n}) = <b>${r2(t)}</b>. CI = ${r1(xbar)} ± 1.96(${r2(se)}) = [<b>${r2(lo)}</b>, <b>${r2(hi)}</b>]. |t| ${Math.abs(t)>1.96?">":"<"} 1.96 exactly when $\\mu_0=${mu0}$ falls ${Math.abs(t)>1.96?"outside":"inside"} the CI. A hypothesis test and a confidence interval are the same computation read two ways.`
+    };}
+},
+
+{ id:"bayes_flag", topic:"Bayes", kind:"numeric", title:"Bayes for a flagging rule",
+  make(seed){ const rng=mulberry32(seed);
+    const per=[0.01,0.02,0.03,0.05][ri(rng,0,3)]; const se=[0.90,0.95,0.98][ri(rng,0,2)]; const fpr=[0.05,0.10,0.15][ri(rng,0,2)];
+    const post=se*per/(se*per+fpr*(1-per));
+    const N=Math.round(1/per)*10; const bad=Math.round(per*N); const tpos=Math.round(se*bad); const fpos=Math.round(fpr*(N-bad));
+    return {
+      promptHTML:`In one channel, <b>${(per*100).toFixed(0)}%</b> of rows are genuinely anomalous. A flagging rule catches <b>${(se*100).toFixed(0)}%</b> of true anomalies and also flags <b>${(fpr*100).toFixed(0)}%</b> of normal rows by mistake.<p>Given a row is flagged, what is the probability it is actually anomalous? Answer in percent.</p>`,
+      fields:[{key:"p",label:"P(anomalous | flagged)",ans:post*100,tolAbs:2,suffix:"%"}],
+      solutionHTML:`Out of ${N.toLocaleString()} rows: ${bad} anomalous, ~${tpos} of them flagged; ${(N-bad).toLocaleString()} normal, ~${fpos} flagged anyway. P = ${tpos}/(${tpos}+${fpos}) = <b>${(post*100).toFixed(1)}%</b>. This is exactly the composition question from the threshold page: most flags can be false alarms even with a good rule, if the base rate is low.`
+    };}
+},
+
+{ id:"rsquared", topic:"OLS", kind:"numeric", title:"R² from the variance decomposition",
+  make(seed){ const rng=mulberry32(seed);
+    const SStot=ri(rng,80,400); const frac=rf(rng,0.15,0.7,2); const SSres=r2(SStot*frac); const R2=1-SSres/SStot;
+    return {
+      promptHTML:`A regression has $SS_{tot}=${SStot}$ and $SS_{res}=${SSres}$. Compute $R^2=1-SS_{res}/SS_{tot}$.</p>`,
+      fields:[{key:"r2",label:"R²",ans:R2,tolAbs:0.01}],
+      solutionHTML:`R² = 1 − ${SSres}/${SStot} = <b>${r2(R2)}</b>. This is the fraction of the variance in y that the line explains, and only that. It says nothing about whether the line is the right functional form or whether the effect is causal.`
+    };}
+},
+
+{ id:"olsresid", topic:"OLS", kind:"numeric", title:"What the FOCs guarantee",
+  make(seed){ const rng=mulberry32(seed);
+    const n=5, b1=ri(rng,1,4), b0=ri(rng,0,3);
+    const xs=[1,2,3,4,5]; const ys=xs.map(x=>b0+b1*x+rf(rng,-1,1,1));
+    const mx=mn(xs), my=mn(ys); const Sxy=sm(xs.map((x,i)=>(x-mx)*(ys[i]-my))); const Sxx=sm(xs.map(x=>(x-mx)*(x-mx)));
+    const hb1=Sxy/Sxx, hb0=my-hb1*mx;
+    const resid=xs.map((x,i)=>ys[i]-(hb0+hb1*x));
+    const sume=sm(resid), sumxe=sm(xs.map((x,i)=>x*resid[i]));
+    return {
+      promptHTML:`Fit OLS to x = 1,2,3,4,5 and y = ${ys.map(v=>r2(v)).join(", ")}. (b₁ = ${r2(hb1)}, b₀ = ${r2(hb0)}, already computed for you.) Compute the residuals $e_i=y_i-\\hat y_i$ and report $\\sum e_i$ and $\\sum x_i e_i$.</p>`,
+      fields:[{key:"se",label:"Σeᵢ",ans:sume,tolAbs:0.02},{key:"sxe",label:"Σxᵢeᵢ",ans:sumxe,tolAbs:0.05}],
+      solutionHTML:`Both sums are <b>0</b> (up to rounding), always, for any OLS fit. They are not assumptions, they are the first-order conditions the fit was chosen to satisfy: the least-squares line is defined as the one where these two sums vanish.`
+    };}
+},
+
+// ---------------------------------------------------------------- more theory (MC)
+{ id:"clt_mc", topic:"Theory", kind:"mc", title:"What the CLT actually says",
+  make(seed){ void seed;
+    return {
+      promptHTML:`The population Volume is heavily right-skewed. According to the Central Limit Theorem, the sampling distribution of the SAMPLE MEAN of Volume, for large n, is approximately...`,
+      choices:[
+        "Normal, regardless of the skew in the original population.",
+        "Right-skewed, the same shape as the population.",
+        "Normal only if the population itself is already normal.",
+        "Undefined, because skewed data breaks the CLT."],
+      correct:0,
+      solutionHTML:`The CLT is about the sampling distribution of the MEAN, not the data itself. Even though individual Volume values are skewed, the average of many of them is approximately normal for large n. This is why t-tests on means work fine even on skewed data at scale, but it says nothing about individual values or quantiles.`
+    };}
+},
+
+{ id:"r2_mc", topic:"Theory", kind:"mc", title:"What R² does not tell you",
+  make(seed){ void seed;
+    return {
+      promptHTML:`A regression has R² = 0.94. What can you conclude?`,
+      choices:[
+        "The model explains 94% of the variance in y; nothing about whether the model is correctly specified or causal.",
+        "94% of individual predictions will be within a small margin of the true value.",
+        "The relationship between x and y is causal.",
+        "The residuals are normally distributed."],
+      correct:0,
+      solutionHTML:`R² is a variance-explained number, full stop. Anscombe's quartet is the classic demonstration: four datasets with nearly identical R² and regression lines, one of which is linear, one curved, one dominated by an outlier, one nearly vertical. Always pair R² with a residual plot.`
+    };}
+},
+
+{ id:"exogeneity_mc", topic:"Theory", kind:"mc", title:"Bias vs. noise in OLS",
+  make(seed){ void seed;
+    return {
+      promptHTML:`Of the four Gauss-Markov conditions, which one, if violated, makes OLS coefficients BIASED (wrong on average), rather than merely noisy or mis-measured in their uncertainty?`,
+      choices:[
+        "Strict exogeneity: E[error | x] = 0.",
+        "Homoskedasticity: constant error variance.",
+        "No autocorrelation across observations.",
+        "Linearity of the functional form, if the true curve is only mildly nonlinear."],
+      correct:0,
+      solutionHTML:`Violating homoskedasticity or independence leaves OLS unbiased but makes the standard errors wrong (that's the Welch/robust-SE fix). Violating exogeneity is different in kind: if the error is correlated with x, for instance because a variable like UserType is itself partly determined by Volume, the coefficient estimates the wrong quantity, and no amount of data or a better standard error fixes it. That is the question to settle before trusting any b₁.`
+    };}
+},
+
 ];
 
 function makeProblemInstance(p, seed){ const inst=p.make(seed); inst._p=p; inst.seed=seed; return inst; }

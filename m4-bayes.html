@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bayes: updating a belief with evidence</title>
+<link rel="stylesheet" href="style.css">
+<script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 4 of 5 · bayes</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Module 4 · Inference</div>
+  <h1>Bayes: updating a belief with evidence</h1>
+  <p class="sub">Evidence updates a belief, it does not replace it. A good test pointed at a rare event still leaves you mostly uncertain, and the base rate is the reason why. This module proves the theorem in three lines and then puts it to work on a flagging rule.</p>
+</header>
+
+<!-- MODULE_BODY_START -->
+<div class="card">
+  <h2><span class="n">1</span>Counting people instead of multiplying probabilities</h2>
+  <p>A screening test for a rare condition catches 95% of the people who truly have it (its sensitivity) and wrongly flags 4% of the people who don't (its false-positive rate). Those are good numbers for a diagnostic test. You take the test. It comes back positive. How likely is it that you actually have the condition?</p>
+  <p>Most people guess somewhere close to 95%, since that's the number stamped on the test. The real answer, reached below with nothing but arithmetic, is about one in five. The test didn't lie. What's wrong is the assumption that a good test's own accuracy carries over directly to what a positive result means, and the cleanest way to see the gap is to stop thinking in percentages and start thinking in people.</p>
+  <p>Picture 10,000 people taking this test. The condition affects 1% of the population, so before anyone is tested, 100 of the 10,000 already have it and 9,900 don't. Apply the test's two error rates to each group and sort everyone into four counts.</p>
+  <table>
+    <thead><tr><th>group</th><th>people</th><th>test positive</th><th>test negative</th></tr></thead>
+    <tbody>
+      <tr><td>has the condition</td><td>100</td><td>95</td><td>5</td></tr>
+      <tr><td>does not have it</td><td>9,900</td><td>396</td><td>9,504</td></tr>
+      <tr><td>total</td><td>10,000</td><td>491</td><td>9,509</td></tr>
+    </tbody>
+  </table>
+  <p>Add the two positive-test cells and 491 people test positive out of the 10,000: 95 who genuinely have the condition, and 396 who don't. The answer is sitting in those two numbers.</p>
+  <div class="verdict">
+    <div class="row"><b>P(condition&nbsp;|&nbsp;positive)</b> = 95 / 491 &approx; <b>19.3%</b></div>
+    <div class="row">for every true positive, roughly four false alarms (396 / 95 &approx; 4.2)</div>
+  </div>
+  <p>The 95% sensitivity did its job: it's the reason 95 of the 100 truly sick people show up positive at all. But the false-positive rate, only 4%, is being multiplied against a group 99 times bigger than the sick group, and 4% of 9,900 is a larger raw count than 95% of 100. The rare group and the common group swap places once you multiply by how big each one actually is, and that swap is the entire mechanism behind the gap between 95% and 19%. Bayes' theorem, next, is just the formula that makes this swap explicit without redrawing a table of 10,000 people every time.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>The theorem, in four lines, and a faster shortcut in odds</h2>
+  <p>Conditional probability has two mirror-image definitions, one for each order you condition in:</p>
+  <div class="eq" style="overflow-x:auto">$$P(A\mid B)=\frac{P(A\cap B)}{P(B)} \qquad\text{and}\qquad P(B\mid A)=\frac{P(A\cap B)}{P(A)}$$</div>
+  <p>Both are the same idea, "the fraction of one event's world that also lands in the other," just read in the two possible directions. Solve each one for $P(A\cap B)$ and the two right-hand sides have to agree, since they describe the identical overlap:</p>
+  <div class="eq" style="overflow-x:auto">$$P(A\mid B)\,P(B) \;=\; P(A\cap B) \;=\; P(B\mid A)\,P(A)$$</div>
+  <p>Divide both sides by $P(B)$ and the intersection drops out, leaving only conditional probabilities and the two plain probabilities $P(A)$ and $P(B)$:</p>
+  <div class="eq" style="overflow-x:auto">$$P(A\mid B)=\frac{P(B\mid A)\,P(A)}{P(B)}$$</div>
+  <p>That's Bayes' theorem, complete, in four lines, no table required. Set $A$ = "has the condition" and $B$ = "tests positive." $P(A)=0.01$ is the prior, what you'd guess before any test. $P(B\mid A)=0.95$ is the sensitivity. The one piece not handed to you directly is $P(B)$, the overall chance of a positive result, and it has to add up positives from both groups:</p>
+  <div class="eq" style="overflow-x:auto">$$P(B) = P(B\mid A)P(A) + P(B\mid \neg A)P(\neg A) = (0.95)(0.01) + (0.04)(0.99) = 0.0095 + 0.0396 = 0.0491$$</div>
+  <p>So $P(A\mid B) = 0.0095 / 0.0491 = 0.1935$, the same 19.3% the 10,000-person table gave, because it's the same division with every count scaled down by 10,000.</p>
+  <p>There's a quicker route that skips computing $P(B)$ entirely, and it's the one worth carrying in your head. Write Bayes' theorem once for $A$ and once for its complement $\neg A$, then divide one by the other:</p>
+  <div class="eq" style="overflow-x:auto">$$\frac{P(A\mid B)}{P(\neg A\mid B)} = \frac{P(B\mid A)}{P(B\mid\neg A)}\times\frac{P(A)}{P(\neg A)}$$</div>
+  <p>$P(B)$ cancels, since it sits in both denominators. The left side is the posterior odds: how much more likely $A$ is than $\neg A$ once $B$ is known. The right side splits into two named pieces: the likelihood ratio, how much more consistent the evidence is with $A$ than with $\neg A$, times the prior odds, what you believed before any evidence at all.</p>
+  <div class="eq" style="overflow-x:auto">$$\text{posterior odds} = \text{likelihood ratio} \times \text{prior odds}$$</div>
+  <p>Worked on the same numbers: prior odds are $0.01/0.99 = 1{:}99$. The likelihood ratio for a positive result is sensitivity over the false-positive rate, $0.95/0.04 = 23.75$. Multiply:</p>
+  <div class="eq" style="overflow-x:auto">$$\text{posterior odds} = 23.75 \times \frac{1}{99} = \frac{23.75}{99} \;=\; 23.75 : 99$$</div>
+  <p>Odds convert back to a probability by dividing the "for" side by the sum of both sides: $23.75/(23.75+99) = 23.75/122.75 = 0.1935$. Same 19.3%, and this time $P(B)$ was never written down. In fact $23.75/122.75$ is $95/491$ with everything multiplied by four, which isn't a coincidence: the odds form and the raw formula are the same theorem, and the natural-frequency table in Part 1 is a third way of doing the identical division. Landing on one answer by three routes is a good sign you understand the calculation rather than just which formula to plug into.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>Confirming it with a hundred thousand simulated people</h2>
+  <p>Nothing above needed simulation: the table and both forms of the formula reach 19.3% by exact division. A simulation is still worth running, because it checks the logic a different way. Build 100,000 people from scratch, flip a weighted coin for the condition and a second weighted coin for the test result exactly as described, and see what fraction of the people who test positive are actually sick, without invoking Bayes' theorem by name anywhere in the code.</p>
+<pre><span class="c"># Part 1's table, built directly from the definitions, before any simulation</span>
+prevalence  &lt;- 0.01; sensitivity &lt;- 0.95; fpr &lt;- 0.04
+N &lt;- 10000
+sick    &lt;- prevalence * N
+healthy &lt;- N - sick
+tp &lt;- sensitivity * sick    <span class="c"># true positives</span>
+fp &lt;- fpr * healthy         <span class="c"># false positives</span>
+<span class="k">c</span>(sick = sick, healthy = healthy, true_pos = tp, false_pos = fp)
+<span class="c">#   sick healthy true_pos false_pos
+#    100    9900       95       396</span>
+
+tp / (tp + fp)
+<span class="c"># [1] 0.1934827   &lt;- matches the 19.3% read off the table by hand</span>
+
+<span class="c"># now build 100,000 people from scratch and let them generate their own table</span>
+<span class="k">set.seed</span>(8804)
+Nsim &lt;- 100000
+has_condition &lt;- <span class="k">rbinom</span>(Nsim, 1, prevalence)                       <span class="c"># coin 1: who is actually sick</span>
+p_test_pos    &lt;- <span class="k">ifelse</span>(has_condition == 1, sensitivity, fpr)     <span class="c"># the coin each person's test uses</span>
+tested_pos    &lt;- <span class="k">rbinom</span>(Nsim, 1, p_test_pos)                      <span class="c"># coin 2: does that person test positive</span>
+
+n_flagged      &lt;- <span class="k">sum</span>(tested_pos)
+n_flagged_sick &lt;- <span class="k">sum</span>(has_condition[tested_pos == 1])
+<span class="k">c</span>(n_flagged = n_flagged, n_flagged_sick = n_flagged_sick)
+<span class="c">#   n_flagged n_flagged_sick
+#        4918            977</span>
+
+n_flagged_sick / n_flagged
+<span class="c"># [1] 0.1987   &lt;- simulated P(condition | positive), against the analytic 0.1935</span></pre>
+  <p>4,918 of the 100,000 simulated people tested positive, and 977 of those were genuinely sick, for a simulated $P(\text{condition}\mid\text{positive})$ of 19.87% against the analytic 19.35%. The half-point gap is Monte Carlo noise, not a mistake: only around 1,010 of the 100,000 simulated people actually had the condition, so the count feeding the numerator is small and jumps around from one seed to the next. Re-running with a different <span class="mono">set.seed()</span> lands somewhere close to 19.3% but rarely exactly on it, which is what should happen when the whole mechanism is built out of two coin flips per person instead of a single ratio computed directly.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">4</span>Back to a flagging rule on the channel data</h2>
+  <p>A flagging rule on the channel data runs on the identical mechanics with different labels: "has the condition" becomes "is a genuine anomaly," and "tests positive" becomes "gets flagged." True anomalies are a small share of any channel's traffic, so even a rule with strong sensitivity and a low false-positive rate can still return a flagged set that's mostly noise, for the same reason 396 healthy people outnumbered 95 sick ones above. That's why the threshold module reports exceedance, $P(X>t)$ per segment, rather than a single flag rate: how well a rule catches true anomalies says nothing about what a flag actually means until you know how rare those anomalies are to begin with.</p>
+</div>
+<!-- MODULE_BODY_END -->
+
+<div class="card" style="background:linear-gradient(180deg,#fff,#f7f2ea)">
+  <h2><span class="n">✓</span>Quick check</h2>
+  <p style="color:var(--dim);margin-top:-.3rem">Three problems on this module's material. Generated fresh each time; use "new numbers" for more reps, or see the <a href="practice.html">full practice bank</a> for everything.</p>
+  <div id="qc"></div>
+</div>
+
+<footer>
+  <a href="m3-hypothesis-testing.html">← Hypothesis testing</a> &nbsp;·&nbsp; <a href="index.html">all modules</a> &nbsp;·&nbsp; next: <a href="m5-regression.html">Regression &amp; causal thinking →</a><br>
+  Synthetic data, generated in your browser. Ian Helfrich, Ph.D.
+</footer>
+</div>
+
+<script src="lib.js"></script>
+<script src="problems.js"></script>
+<script src="render.js"></script>
+<script>renderQuickCheck(document.getElementById("qc"), ["bayes","bayesodds","bayes_flag"], 8804);</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estimation, the CLT &amp; confidence intervals</title>
+<link rel="stylesheet" href="style.css">
+<script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 2 of 5 · estimation &amp; the CLT</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Module 2 · Foundations</div>
+  <h1>Estimation, the CLT &amp; confidence intervals</h1>
+  <p class="sub">A sample mean is a guess. The Central Limit Theorem is the reason you can attach a margin of error to that guess, even when the data itself looks nothing like a bell curve.</p>
+</header>
+
+<!-- MODULE_BODY_START -->
+<div class="card">
+  <h2><span class="n">1</span>Why five weighings beat one</h2>
+  <p>Put a bag of coffee on a cheap kitchen scale. The scale is not lying to you exactly, but it is not perfectly honest either: read it five times in a row without moving the bag and you get five slightly different numbers, because the mechanism has a little noise in it. Say the true weight is 200 grams and the scale's noise has a standard deviation of about 8 grams. One reading is a guess with an 8-gram wobble built in. What do you do about that wobble? You weigh it again. And again.</p>
+  <p>Five readings, written down as they come off the scale:</p>
+  <table>
+    <thead><tr><th>weighing</th><th>reading (g)</th><th>error from 200g</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>202</td><td>+2</td></tr>
+      <tr><td>2</td><td>195</td><td>&minus;5</td></tr>
+      <tr><td>3</td><td>210</td><td>+10</td></tr>
+      <tr><td>4</td><td>188</td><td>&minus;12</td></tr>
+      <tr><td>5</td><td>204</td><td>+4</td></tr>
+    </tbody>
+  </table>
+  <p>Each single reading is off by as much as 12 grams. Add the five readings (202 + 195 + 210 + 188 + 204 = 999) and divide by 5: the average is 199.8 grams, off by two tenths of a gram. Nobody's readings got more honest. The scale is exactly as noisy on weighing five as it was on weighing one. What changed is that five independent wobbles, some high, some low, mostly cancel when you add them up and divide. That cancellation, not any improvement in the instrument, is the entire mechanism behind every standard error and every confidence interval in this module.</p>
+  <div class="controls"><div class="ctrl">
+    <label>Weighings averaged <b id="nWeighOut"></b></label>
+    <input id="nWeigh" type="range" min="1" max="40" step="1" value="5">
+  </div></div>
+  <canvas id="scaleCanvas" width="880" height="200"></canvas>
+  <p style="font-size:.92rem;margin:.2rem 0 0">Running mean: <b id="xbarOut" class="mono"></b> g &nbsp;·&nbsp; implied standard error, &sigma;/&radic;n: <b id="seOut" class="mono"></b> g</p>
+  <p>This is a fresh simulated scale, so its five numbers will not match the table above, but watch the same thing happen: the black dots (individual weighings) scatter across the same 8-gram-ish band no matter how far you drag the slider. The red line (the running mean) barely moves once you pass a handful of weighings, and the shaded band around it, which is exactly one standard error wide, visibly tightens. More data does not make any single measurement more accurate. It makes the <em>average</em> of your measurements more accurate, and it does so at a specific, calculable rate.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>The Central Limit Theorem and the &radic;n law</h2>
+  <p>The formal statement is worth having exactly right, because the whole point is what it does <em>not</em> require. Let $X_1, X_2, \dots, X_n$ be independent draws from any population with finite mean $\mu$ and finite variance $\sigma^2$. It does not have to be a bell curve. It can be as skewed as the coffee scale example, or as skewed as a channel's raw volume score. As $n$ grows, the sample mean $\bar X_n$ settles into a normal distribution regardless, for large $n$, whatever the shape of the population it came from:</p>
+  <div class="eq" style="overflow-x:auto">$$\bar X_n \;\approx\; N\!\left(\mu, \; \frac{\sigma^2}{n}\right)$$</div>
+  <p>The population can look like anything, as long as it has a finite variance (rule 8 in the site's threshold notes is exactly about what happens when it doesn't). The sample <em>mean</em> of a large enough batch of draws from it looks like a bell curve anyway. That's the whole theorem, and it's the reason a confidence interval on an average can be trusted even when a histogram of the raw data looks nothing like one.</p>
+  <p>The spread of that bell curve is the standard error, and it's worth deriving rather than memorizing. Variance adds across independent draws, so the variance of a <em>sum</em> of $n$ independent draws is $n\sigma^2$. The mean divides that sum by $n$, and dividing a variance by $n$ means dividing by $n^2$:</p>
+  <div class="eq" style="overflow-x:auto">$$\text{Var}(\bar X_n) = \text{Var}\!\left(\frac{1}{n}\sum_{i=1}^n X_i\right) = \frac{1}{n^2}\sum_{i=1}^n \text{Var}(X_i)$$</div>
+  <div class="eq" style="overflow-x:auto">$$= \frac{n\sigma^2}{n^2} = \frac{\sigma^2}{n} \qquad \Longrightarrow \qquad SE = \frac{\sigma}{\sqrt n}.$$</div>
+  <p>One factor of $n$ cancels against the $n^2$ in the denominator, but the other one is left stuck under a square root. That mismatch, an $n^2$ in the denominator against only an $n$ in the numerator, is the entire reason precision improves with $\sqrt n$ and not with $n$ itself. It also means precision is a game of steeply diminishing returns: to cut the standard error in half, $\sqrt n$ has to double, which means $n$ has to <em>quadruple</em>, not just double.</p>
+  <p>Worked example. A population has $\sigma = 20$. At $n = 25$:</p>
+  <div class="eq" style="overflow-x:auto">$$SE = \frac{20}{\sqrt{25}} = \frac{20}{5} = 4.$$</div>
+  <p>To cut that SE in half, down to 2, solve $20/\sqrt n = 2$, so $\sqrt n = 10$ and $n = 100$. Going from 25 measurements to 100, four times the effort, buys exactly one halving of the margin of error. Going from 100 to 400 buys the next halving. This is why "just collect more data" is a much more expensive fix than it sounds.</p>
+  <p>Once you have $SE = s/\sqrt n$ (using the sample standard deviation $s$ as a stand-in for the unknown $\sigma$), a 95% confidence interval for the population mean is the mean plus or minus roughly two standard errors:</p>
+  <div class="eq" style="overflow-x:auto">$$\bar x \;\pm\; 1.96 \cdot \frac{s}{\sqrt n}.$$</div>
+  <p>The constant 1.96 is the value that cuts off the middle 95% of a standard normal, and it's what the CLT licenses you to use for large $n$. It is technically an approximation to the exact $t$-critical value at $n-1$ degrees of freedom, which is slightly wider at small $n$ (2.03 at $n=36$, 2.26 at $n=10$) and converges to 1.96 as $n$ grows. At the sample sizes this site deals with, in the thousands, the difference between $t$ and 1.96 is not worth carrying.</p>
+  <p>Worked example. A sample has $\bar x = 50$, $s = 12$, $n = 36$.</p>
+  <div class="eq" style="overflow-x:auto">$$SE = \frac{12}{\sqrt{36}} = \frac{12}{6} = 2, \qquad \text{margin} = 1.96 \times 2 = 3.92.$$</div>
+  <div class="eq" style="overflow-x:auto">$$CI = 50 \pm 3.92 = [46.08,\; 53.92].$$</div>
+  <p>That interval is the honest range of population means consistent with the sample you got. Any hypothesized $\mu_0$ sitting outside $[46.08, 53.92]$ is exactly what a two-sided test at $\alpha = 0.05$ would reject, which is the link module 3 picks up.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>Watching it happen in R</h2>
+  <p>Rather than take the theorem's word for it, simulate both halves at once: a genuinely skewed population, and the distribution of sample means drawn from it. <span class="mono">rlnorm()</span> with no arguments draws from a lognormal population with meanlog 0 and sdlog 1, which is exactly the kind of long-right-tail shape the channel volume score has. Draw one giant batch to see the population's own shape, then draw 2000 separate samples of size $n=30$ and keep nothing but each sample's mean.</p>
+<pre><span class="c"># the population itself: heavily right-skewed, mean well above the median</span>
+<span class="k">set.seed</span>(8802)
+pop &lt;- <span class="k">rlnorm</span>(200000)
+<span class="k">c</span>(mean = <span class="k">mean</span>(pop), median = <span class="k">median</span>(pop), sd = <span class="k">sd</span>(pop))
+<span class="c">#   mean median     sd
+# 1.6454 0.9928 2.1842      &lt;- mean is 66% above the median: the signature of right skew</span>
+
+<span class="c"># 2000 independent samples of n = 30, one mean kept from each</span>
+means &lt;- <span class="k">replicate</span>(2000, <span class="k">mean</span>(<span class="k">rlnorm</span>(30)))
+<span class="k">c</span>(mean = <span class="k">mean</span>(means), sd = <span class="k">sd</span>(means))
+<span class="c">#   mean     sd
+# 1.6539 0.3959</span>
+
+<span class="c"># closed-form theory for lognormal(0,1), compared against the simulation above</span>
+sigma_pop  &lt;- <span class="k">sqrt</span>((<span class="k">exp</span>(1) - 1) * <span class="k">exp</span>(1))
+se_theory  &lt;- sigma_pop / <span class="k">sqrt</span>(30)
+<span class="c"># sigma_pop = 2.1612, se_theory = sigma_pop / sqrt(30) = 0.3946
+# the SIMULATED sd(means) above was 0.3959 -- within 0.3% of the closed-form prediction</span>
+
+<span class="c"># shape check: is the sampling distribution actually more SYMMETRIC, not just narrower?</span>
+<span class="k">quantile</span>(pop,   <span class="k">c</span>(.05, .25, .5, .75, .95), type = 8)
+<span class="c">#     5%    25%    50%    75%    95%
+# 0.1916 0.5068 0.9928 1.9542 5.1924    &lt;- median-to-95th is 5.2x the width of 5th-to-median</span>
+
+<span class="k">quantile</span>(means, <span class="k">c</span>(.05, .25, .5, .75, .95), type = 8)
+<span class="c">#     5%    25%    50%    75%    95%
+# 1.1126 1.3723 1.5996 1.8733 2.3557    &lt;- median-to-95th is only 1.6x the 5th-to-median width</span></pre>
+  <p>Every number here checks the theorem numerically. The mean of the 2000 sample means (1.6539) lands almost exactly on the population mean the closed-form lognormal formula predicts (1.6487), which is what the CLT says has to happen: averaging doesn't shift where you're centered. The spread of those 2000 means (sd = 0.3959) lands almost exactly on the $\sigma/\sqrt n$ prediction (0.3946), the $\sqrt n$ law confirmed by simulation. The quantile spacing goes further and shows the shape itself changed. The raw population's 95th percentile sits 5.2 times as far above its median as its 5th percentile sits below, wildly asymmetric, while the sampling distribution of the mean has that ratio down to 1.6, much closer to the roughly-equal spacing a normal curve gives. The lognormal population never stops being skewed. Averaging 30 of it at a time produces something close enough to symmetric to trust a $z$-based interval on.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">4</span>What this buys, and what it doesn't</h2>
+  <p>This is the reason a mean-based confidence interval, or the t-test in module 3, can be trusted on a channel's volume score even though the raw score is nowhere near symmetric and piles up at both a floor and a cap. The thing being averaged is many rows, and the CLT works on that average, provided there's enough of it and the variance behind it is actually finite. What it does not do is rescue a claim about one row. Whether a single placement's score is unusually high is a percentile question, answered off that channel's own distribution, not a CLT question, and the two get confused more often than they should.</p>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var TRUE_W = 200, SIGMA = 8, MAXN = 40;
+  var rng = mulberry32(44205), N = makeNormal(rng);
+  var draws = new Array(MAXN);
+  for (var i = 0; i < MAXN; i++) draws[i] = TRUE_W + SIGMA * N();
+
+  var cv = $("scaleCanvas"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height, mL = 10, mR = 10, mT = 14, mB = 24;
+  var YMIN = 150, YMAX = 250;
+  function py(v){ return mT + (YMAX - v) / (YMAX - YMIN) * (H - mT - mB); }
+  function px(i){ return mL + (i / (MAXN - 1)) * (W - mL - mR); }
+
+  function update(){
+    var n = +$("nWeigh").value;
+    $("nWeighOut").textContent = n;
+    var s = 0;
+    for (var i = 0; i < n; i++) s += draws[i];
+    var xbar = s / n, se = SIGMA / Math.sqrt(n);
+
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = PAL.gold; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(mL, py(TRUE_W)); ctx.lineTo(W - mR, py(TRUE_W)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = PAL.dim; ctx.font = "11px -apple-system,sans-serif";
+    ctx.fillText("true weight = " + TRUE_W + "g", mL + 2, py(TRUE_W) - 5);
+
+    ctx.fillStyle = PAL.rust; ctx.globalAlpha = 0.13;
+    ctx.fillRect(mL, py(xbar + se), W - mL - mR, py(xbar - se) - py(xbar + se));
+    ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = PAL.rust; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(mL, py(xbar)); ctx.lineTo(W - mR, py(xbar)); ctx.stroke();
+
+    for (var j = 0; j < n; j++){
+      ctx.fillStyle = PAL.ink; ctx.globalAlpha = 0.75;
+      ctx.beginPath(); ctx.arc(px(j), py(draws[j]), 3.5, 0, 2 * Math.PI); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    $("xbarOut").textContent = xbar.toFixed(2);
+    $("seOut").textContent = se.toFixed(2);
+  }
+  $("nWeigh").addEventListener("input", update);
+  update();
+});
+</script>
+<!-- MODULE_BODY_END -->
+
+<div class="card" style="background:linear-gradient(180deg,#fff,#f7f2ea)">
+  <h2><span class="n">✓</span>Quick check</h2>
+  <p style="color:var(--dim);margin-top:-.3rem">Three problems on this module's material. Generated fresh each time; use "new numbers" for more reps, or see the <a href="practice.html">full practice bank</a> for everything.</p>
+  <div id="qc"></div>
+</div>
+
+<footer>
+  <a href="m1-distributions.html">← Distributions</a> &nbsp;·&nbsp; <a href="index.html">all modules</a> &nbsp;·&nbsp; next: <a href="m3-hypothesis-testing.html">Hypothesis testing →</a><br>
+  Synthetic data, generated in your browser. Ian Helfrich, Ph.D.
+</footer>
+</div>
+
+<script src="lib.js"></script>
+<script src="problems.js"></script>
+<script src="render.js"></script>
+<script>renderQuickCheck(document.getElementById("qc"), ["se_clt","n_precision","ci_manual"], 8802);</script>
+</body>
+</html>

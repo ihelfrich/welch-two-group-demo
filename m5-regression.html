@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regression &amp; causal thinking</title>
+<link rel="stylesheet" href="style.css">
+<script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 5 of 5 · regression</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Module 5 · Models</div>
+  <h1>Regression &amp; causal thinking</h1>
+  <p class="sub">Two formulas fit any line. The real content of a regression is what its coefficient means, when a categorical predictor makes it a group comparison in disguise, and whether the line you fit is even entitled to a causal reading.</p>
+</header>
+
+<!-- MODULE_BODY_START -->
+<div class="card">
+  <h2><span class="n">1</span>A regression line is a single best opinion</h2>
+  <p>Pull five placements from a single day and lay two numbers side by side for each one: how many distinct ad exchanges routed traffic to it, and the VolatilityScore that traffic produced. Five dots on a page. The eye wants to draw a line through them right away, and that instinct is fine, but "a line" undersells what's actually being claimed. Any line through those dots is a specific, checkable statement: for every extra exchange routing traffic here, expect the score to move by this many points, starting from this baseline. Two people looking at the same five dots can draw two different lines and both walk away confident. Regression is the rule that settles the argument by defining, precisely, which line wins.</p>
+  <table>
+    <thead><tr><th>placement</th><th>exchanges (x)</th><th>VolatilityScore (y)</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>1</td><td>3</td></tr>
+      <tr><td>2</td><td>2</td><td>5</td></tr>
+      <tr><td>3</td><td>3</td><td>4</td></tr>
+      <tr><td>4</td><td>4</td><td>6</td></tr>
+      <tr><td>5</td><td>5</td><td>7</td></tr>
+    </tbody>
+  </table>
+  <p>Three candidate lines, all defensible at a glance. One analyst is unimpressed by the whole exercise and says exchange count doesn't matter, so just predict the average score for everyone: a flat line at $\bar y = 5$. A second eyeballs the trend and picks tidy numbers, score starts at 2 and rises a point per exchange: $y = 2 + x$. A third runs the least-squares formula derived in Part 2 and gets a less tidy $y = 2.3 + 0.9x$. All three pass through the middle of the cloud. Only one of them is entitled to call itself best, and "best" is defined as the smallest total squared miss, the sum of squared residuals, each line racks up across all five points.</p>
+  <table>
+    <thead><tr><th>candidate line</th><th>predictions at x = 1..5</th><th>sum of squared residuals</th></tr></thead>
+    <tbody>
+      <tr><td>flat: $y=5$</td><td>5, 5, 5, 5, 5</td><td>10.00</td></tr>
+      <tr><td>round guess: $y=2+x$</td><td>3, 4, 5, 6, 7</td><td>2.00</td></tr>
+      <tr><td>least squares: $y=2.3+0.9x$</td><td>3.2, 4.1, 5.0, 5.9, 6.8</td><td><b>1.90</b></td></tr>
+    </tbody>
+  </table>
+  <canvas id="m5scatter" width="880" height="220"></canvas>
+  <div class="legend">
+    <span><b style="color:var(--dim)">┈</b> flat guess, ignores x entirely (SSE 10.00)</span>
+    <span><b style="color:var(--ink)">┈</b> round-number guess, close but not optimal (SSE 2.00)</span>
+    <span><b style="color:var(--rust)">━</b> least squares, the actual minimum (SSE 1.90)</span>
+  </div>
+  <p>The round-number guess is close: SSE 2.00 against the least-squares line's 1.90, close enough that eyeballing a line by hand can feel like it's doing fine. It still isn't the minimum, and least squares is defined as whichever line is. Part 2 derives the two formulas that find that exact minimum without any guessing, trial, or squinting at a scatterplot, whether there are five points or five hundred thousand.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>Deriving the line from the optimization itself</h2>
+  <p>The model underneath all of this: each observation is $y_i = b_0 + b_1 x_i + e_i$, an intercept, a slope times $x$, and whatever's left over, the error $e_i$. Least squares picks $b_0$ and $b_1$ to minimize the total squared error across all $n$ points:</p>
+  <div class="eq">$$S(b_0,b_1)=\sum_{i=1}^n (y_i-b_0-b_1x_i)^2$$</div>
+  <p><b>Two first-order conditions.</b> $S$ is a smooth, bowl-shaped function of $b_0$ and $b_1$: squared terms are never negative, and the sum only grows as either coefficient drifts from its best value. The minimum sits where nudging either coefficient, in either direction, no longer helps. Setting the two partial derivatives to zero and dividing through the leftover constants gives two conditions the fitted line has to satisfy:</p>
+  <div class="eq">$$\sum_{i=1}^n (y_i - b_0 - b_1 x_i) = 0 \qquad\text{and}\qquad \sum_{i=1}^n x_i(y_i - b_0 - b_1 x_i) = 0$$</div>
+  <p>Write $e_i = y_i-b_0-b_1x_i$ for the residual at each point, and the two conditions say something concrete. $\sum e_i = 0$: the residuals sum to zero, so the fitted line runs through the point $(\bar x,\bar y)$, for any data, always. $\sum x_i e_i = 0$: the residuals carry no leftover straight-line relationship with $x$; if they did, the line hadn't finished extracting what $x$ has to offer. Solve the two conditions together and the algebra collapses to two formulas:</p>
+  <div class="eq">$$b_1 = \frac{\sum(x_i-\bar x)(y_i-\bar y)}{\sum(x_i-\bar x)^2} = \frac{S_{xy}}{S_{xx}} \qquad\qquad\qquad b_0 = \bar y - b_1\bar x$$</div>
+  <p>That's the whole derivation. Every regression, however many predictors it eventually grows, is built from some version of the same idea: choose coefficients so the residuals sum to zero and carry no remaining straight-line relationship with anything sitting on the right-hand side.</p>
+
+  <p><b>Working the five placements by hand.</b> Same data as Part 1: $x = 1,2,3,4,5$ and $y = 3,5,4,6,7$.</p>
+  <div class="eq">$$\bar x = \frac{1+2+3+4+5}{5}=3 \qquad\qquad\qquad \bar y = \frac{3+5+4+6+7}{5}=5$$</div>
+  <p>$S_{xx}$ needs each $x$'s distance from $\bar x=3$, squared: $(1{-}3)^2+(2{-}3)^2+(3{-}3)^2+(4{-}3)^2+(5{-}3)^2 = 4+1+0+1+4 = 10$.</p>
+  <p>$S_{xy}$ pairs those same distances with $y$'s distance from $\bar y=5$: $(-2)(-2)+(-1)(0)+(0)(-1)+(1)(1)+(2)(2) = 4+0+0+1+4=9$.</p>
+  <div class="eq">$$b_1 = \frac{S_{xy}}{S_{xx}} = \frac{9}{10} = 0.9 \qquad\qquad\qquad b_0 = \bar y - b_1\bar x = 5 - (0.9)(3) = 2.3$$</div>
+  <p>That matches the least-squares line from Part 1 exactly, because it's the same calculation, carried out this time instead of handed over. Fitted values $\hat y_i = 2.3+0.9x_i$ come to $3.2, 4.1, 5.0, 5.9, 6.8$, and the residuals $y_i-\hat y_i$ come to $-0.2, 0.9, -1.0, 0.1, 0.2$. Add those five residuals and they sum to $0$. Multiply each by its own $x_i$ and sum again: $1(-0.2)+2(0.9)+3(-1.0)+4(0.1)+5(0.2) = -0.2+1.8-3.0+0.4+1.0=0$, also exactly zero. Neither zero is a coincidence or a rounding accident. Those are the two first-order conditions from above, confirmed by hand on this specific line.</p>
+
+  <p><b>Where the fit went, and $R^2$.</b> Total variation in $y$ splits cleanly into a part the line accounts for and a part it doesn't, an exact accounting identity with no approximation involved:</p>
+  <div class="eq" style="overflow-x:auto">$$\underbrace{\sum(y_i-\bar y)^2}_{SS_{tot}} \;=\; \underbrace{\sum(\hat y_i-\bar y)^2}_{SS_{reg}} \;+\; \underbrace{\sum e_i^2}_{SS_{res}}, \qquad\qquad R^2=\frac{SS_{reg}}{SS_{tot}}=1-\frac{SS_{res}}{SS_{tot}}$$</div>
+  <p>On the five placements, $SS_{tot}=\sum(y_i-5)^2=4+0+1+1+4=10$, and $SS_{res}=\sum e_i^2 = 0.04+0.81+1.00+0.01+0.04=1.90$, the exact SSE from Part 1's table. So $SS_{reg}=10-1.90=8.10$ and $R^2 = 8.10/10 = 0.81$: the line accounts for 81% of the spread in VolatilityScore across these five placements, leaving 19% as leftover noise the exchange count doesn't explain. $R^2$ answers exactly that question and no other. A model can hit $R^2=0.95$ while fitting the wrong curve entirely, Anscombe's quartet is the standard demonstration, so a residual plot belongs next to $R^2$ on every regression output, not instead of it.</p>
+
+  <p><b>When $x$ is a 0/1 flag instead of a count.</b> Nothing about the two boxed formulas required $x$ to be a count or a dollar figure. Recode $x$ as a dummy, 0 for one channel and 1 for another, membership rather than magnitude, and the same $b_1=S_{xy}/S_{xx}$ machinery still runs, but it collapses to something far more concrete. Split the $n$ observations into $n_0$ at $x=0$ and $n_1$ at $x=1$, with group means $\bar y_0$ and $\bar y_1$: the algebra inside $S_{xy}$ and $S_{xx}$ reduces, group size by group size, straight down to</p>
+  <div class="eq">$$b_1 = \bar y_1 - \bar y_0 \qquad\qquad\qquad b_0 = \bar y_0$$</div>
+  <p>The slope on a 0/1 dummy is exactly the difference in group means. The intercept is exactly the mean of whichever group got coded 0, the reference group. This is worth sitting with, because it's the single fact that connects this module to <a href="welch.html">the two-group comparison page</a>: a regression on a channel dummy and a plain comparison of two group means are not two different tools that happen to agree with each other. They're the identical calculation wearing two different names.</p>
+  <p>Six numbers make it concrete: three placements coded 0 (VolatilityScore 2, 3, 4, mean 3) and three coded 1 (score 8, 9, 10, mean 9).</p>
+  <div class="eq" style="overflow-x:auto">$$\bar x = 0.5,\quad \bar y = 6,\quad S_{xx}=1.5,\quad S_{xy}=9,\quad b_1=\frac{9}{1.5}=6,\quad b_0 = 6-(6)(0.5)=3$$</div>
+  <p>$b_1=6$ is exactly $9-3$, the group-1 mean minus the group-0 mean. $b_0=3$ is exactly the group-0 mean, standing alone. No coincidence survives being checked against the same formula three separate times, in Part 1, earlier in Part 2, and here. This is what a dummy regression always does.</p>
+
+  <p><b>The four conditions that make this line trustworthy.</b> OLS produces a line out of any $(x,y)$ pairs handed to it, whether or not the line means anything. Under four conditions, the Gauss-Markov conditions, that line is the best linear unbiased estimator of the true relationship, "best" meaning lowest variance among every unbiased linear estimator available.</p>
+  <ol>
+    <li><b>Linearity.</b> The true relationship really does bend around a straight line in the parameters, not a curve the line is straining to approximate.</li>
+    <li><b>Strict exogeneity.</b> $E[e_i\mid x_i]=0$: whatever the error term is capturing carries no systematic relationship with $x$. This is the one that decides whether $b_1$ deserves a causal reading at all.</li>
+    <li><b>Homoskedasticity.</b> $\mathrm{Var}(e_i\mid x_i)=\sigma^2$ for every $i$: the spread of the leftover noise doesn't change as $x$ moves, or as group membership changes.</li>
+    <li><b>No autocorrelation.</b> $\mathrm{Cov}(e_i,e_j)=0$ for any two different observations: one row's leftover error carries no information about another row's.</li>
+  </ol>
+  <p>Two of these four fail in structurally different ways, and the difference matters more than anything else in this module for anyone flagging traffic off a fitted coefficient.</p>
+  <div class="verdict">
+    <div class="row"><b>Exogeneity fails</b> ($E[e\mid x]\neq 0$): the coefficient itself is wrong, on average, no matter the sample size. More data doesn't fix it. A differently computed standard error doesn't fix it either. This is what happens if a channel flag is partly a consequence of Volume rather than purely a cause of it.</div>
+    <div class="row"><b>Homoskedasticity fails</b> (error spread depends on $x$): $b_1$ stays correct on average. Only its standard error is wrong, understated by the default formula whenever the noisier group also happens to be the one under measurement. This is exactly the failure Welch's correction and the robust HC2 standard error exist to repair, and Part 3 measures the gap directly.</div>
+  </div>
+  <p>One of those two problems has a known fix that costs nothing more than a different formula. The other doesn't, and no amount of software sophistication substitutes for knowing which one is in play before a coefficient gets reported as a finding.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>The same distinction, run for real in R</h2>
+  <p>The script below was drafted by Codex CLI from a plain-language spec: simulate a continuous predictor and a 0/1 group with unequal error variance by group, fit the model, and compare the default standard error against the heteroskedasticity-robust HC2 version. It was verified here by running it twice, once through the installed <span class="mono">sandwich</span>/<span class="mono">lmtest</span> packages and a second time forced through its base-R fallback branch (the manual White/HC2 sandwich formula, no packages), and the two routes agreed to five decimal places on the group coefficient's robust standard error. What follows is the actual printed output from that run, not a reconstruction.</p>
+<pre><span class="c"># n = 200, continuous x, 0/1 group, group 1 built three times noisier than group 0</span>
+<span class="k">set.seed</span>(123)
+n     &lt;- 200
+group &lt;- <span class="k">rbinom</span>(n, size = 1, prob = 0.45)
+x     &lt;- <span class="k">rnorm</span>(n)
+sigma &lt;- <span class="k">ifelse</span>(group == 1, 3, 1)              <span class="c"># unequal variance by group, on purpose</span>
+y     &lt;- 1 + 0.8 * x + 1.5 * group + <span class="k">rnorm</span>(n, 0, sigma)
+
+fit &lt;- <span class="k">lm</span>(y ~ x + group)
+<span class="k">summary</span>(fit)
+<span class="c">#             Estimate Std. Error t value Pr(&gt;|t|)
+# (Intercept)   1.1106     0.2055   5.405 1.86e-07 ***
+# x             0.8611     0.1594   5.402 1.89e-07 ***
+# group         1.2047     0.3081   3.911 0.000127 ***
+# Residual standard error: 2.164 on 197 degrees of freedom
+# Multiple R-squared:  0.1801</span>
+
+<span class="c"># HC2 robust SE: sandwich + lmtest if installed, else the White/HC2 formula by hand</span>
+<span class="k">if</span> (<span class="k">requireNamespace</span>(<span class="k">"sandwich"</span>, quietly = <span class="k">TRUE</span>) &amp;&amp;
+    <span class="k">requireNamespace</span>(<span class="k">"lmtest"</span>,   quietly = <span class="k">TRUE</span>)) {
+  robust    &lt;- lmtest::<span class="k">coeftest</span>(fit, vcov. = sandwich::<span class="k">vcovHC</span>(fit, type = <span class="k">"HC2"</span>))
+  robust_se &lt;- robust[, <span class="k">"Std. Error"</span>]
+} <span class="k">else</span> {
+  X     &lt;- <span class="k">model.matrix</span>(fit); e &lt;- <span class="k">residuals</span>(fit); h &lt;- <span class="k">hatvalues</span>(fit)
+  bread &lt;- <span class="k">solve</span>(<span class="k">crossprod</span>(X))
+  meat  &lt;- <span class="k">crossprod</span>(X, X * <span class="k">as.numeric</span>(e^2 / (1 - h)))   <span class="c"># White/HC2 sandwich, no packages needed</span>
+  robust_se &lt;- <span class="k">sqrt</span>(<span class="k">diag</span>(bread %*% meat %*% bread))
+}
+
+default_se &lt;- <span class="k">sqrt</span>(<span class="k">diag</span>(<span class="k">vcov</span>(fit)))[<span class="k">"group"</span>]
+<span class="k">c</span>(default_se = <span class="k">unname</span>(default_se), robust_hc2_se = <span class="k">unname</span>(robust_se[<span class="k">"group"</span>]))
+<span class="c">#    default_se robust_hc2_se
+#     0.3080635     0.3359119</span></pre>
+  <p>The group coefficient itself, 1.2047, doesn't depend on which standard error stands next to it: exogeneity wasn't violated in this simulation, so the estimate is unbiased around its true value of 1.5, off by sampling noise from a single draw of 200 rows, exactly as expected. What does depend on the choice is how much that estimate should be trusted. The default SE, 0.3081, comes from a formula that assumes one shared error variance across both groups. The robust HC2 SE, 0.3359, comes from a formula that doesn't assume that, and it's about 9% larger, because group 1 really was built three times noisier than group 0. Both t-statistics still clear significance here (3.911 against 3.586, p = 0.000127 against p = 0.000423), so this particular draw doesn't flip a conclusion. With a smaller sample, a starker variance ratio, or a coefficient sitting closer to the edge of significance, that 9% gap is exactly the difference between a defensible finding and one that only looked defensible because of the wrong formula.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">4</span>Tie it together</h2>
+  <p><span class="mono">Vol = b0 + b1·UserType + e</span> on the real channel data, discussed on the two-group comparison page, is this exact machinery: b1 is DoubleClick's mean VolatilityScore minus Type's, nothing more exotic, and that page already showed why its standard error needs the robust version once the two channels stop sharing a spread. What that page couldn't settle, and what the exogeneity condition above puts a name to, is whether UserType belongs on the right-hand side as a genuine cause of Volume or as something Volume itself partly determined, since a channel that routes more volatile traffic in the first place would leave b1 biased in a way no robust standard error, larger sample, or better software ever repairs. The roadmap's next stop, multiple regression and omitted-variable bias, picks up exactly there.</p>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var xs = [1,2,3,4,5], ys = [3,5,4,6,7];
+  var xmin=0, xmax=6, ymin=0, ymax=11;
+  var padL=34, padR=14, padT=12, padB=24;
+  var cv = $("m5scatter"); if(!cv) return;
+  var ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  function X(x){ return padL + (x-xmin)/(xmax-xmin)*(W-padL-padR); }
+  function Y(y){ return H-padB - (y-ymin)/(ymax-ymin)*(H-padT-padB); }
+  function drawLine(b0,b1,color,dash){
+    ctx.strokeStyle=color; ctx.lineWidth=2.2; ctx.setLineDash(dash||[]);
+    ctx.beginPath(); ctx.moveTo(X(xmin),Y(b0+b1*xmin)); ctx.lineTo(X(xmax),Y(b0+b1*xmax)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = PAL.dim; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(X(xmin),Y(ymin)); ctx.lineTo(X(xmax),Y(ymin)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X(xmin),Y(ymin)); ctx.lineTo(X(xmin),Y(ymax)); ctx.stroke();
+  drawLine(5,0,PAL.dim,[3,3]);
+  drawLine(2,1,PAL.ink,[7,4]);
+  drawLine(2.3,0.9,PAL.rust,[]);
+  ctx.fillStyle = PAL.gold;
+  for (var i=0;i<xs.length;i++){
+    ctx.beginPath(); ctx.arc(X(xs[i]),Y(ys[i]),5,0,2*Math.PI); ctx.fill();
+    ctx.strokeStyle=PAL.ink; ctx.lineWidth=1; ctx.stroke();
+  }
+  ctx.fillStyle = PAL.dim; ctx.font="11px -apple-system,sans-serif";
+  for (var gx=0; gx<=6; gx++) ctx.fillText(gx, X(gx)-3, H-padB+15);
+  for (var gy=0; gy<=10; gy+=2) ctx.fillText(gy, 3, Y(gy)+4);
+});
+</script>
+<!-- MODULE_BODY_END -->
+
+<div class="card" style="background:linear-gradient(180deg,#fff,#f7f2ea)">
+  <h2><span class="n">✓</span>Quick check</h2>
+  <p style="color:var(--dim);margin-top:-.3rem">Problems on this module's material, including two conceptual multiple-choice. Generated fresh each time; see the <a href="practice.html">full practice bank</a> for everything.</p>
+  <div id="qc"></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">→</span>Go deeper</h2>
+  <p>The regression coefficient on a 0/1 channel dummy is exactly a two-group mean difference: see <a href="welch.html">regression as a two-group comparison</a> for the full worked-out connection, including why the default standard error can be the wrong one.</p>
+</div>
+
+<footer>
+  <a href="m4-bayes.html">← Bayes</a> &nbsp;·&nbsp; <a href="index.html">all modules</a><br>
+  Synthetic data, generated in your browser. Ian Helfrich, Ph.D.
+</footer>
+</div>
+
+<script src="lib.js"></script>
+<script src="problems.js"></script>
+<script src="render.js"></script>
+<script>renderQuickCheck(document.getElementById("qc"), ["olsslope","rsquared","olsresid","b1mean","r2_mc","exogeneity_mc"], 8805);</script>
+</body>
+</html>

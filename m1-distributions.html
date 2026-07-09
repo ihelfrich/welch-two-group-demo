@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Distributions &amp; the shape of data</title>
+<link rel="stylesheet" href="style.css">
+<script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+<style>
+  .qc-bar{display:none}
+</style>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 1 of 5 · distributions</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Module 1 · Foundations</div>
+  <h1>Distributions &amp; the shape of data</h1>
+  <p class="sub">Every statistic in this guide is a summary of a distribution. Before any test or model, you need to be able to see one, describe one by hand, and know when its shape breaks the tools built for a bell curve.</p>
+</header>
+
+<!-- MODULE_BODY_START -->
+<div class="card">
+  <h2><span class="n">1</span>A weighted average is not a prediction</h2>
+  <p>Somebody at a fair offers you one roll of a fair six-sided die. Roll a 1, 2, 3, or 4 and you hand over two dollars. Roll a 5 and you win ten dollars. Roll a 6 and you win a hundred dollars. Is the game worth playing?</p>
+  <p>You don't answer that by averaging the three dollar amounts as if they were equally likely, because they aren't. You weight each one by how often it actually happens: four rolls out of six lose two dollars, one roll out of six wins ten, one roll out of six wins a hundred. Do that weighting (the full arithmetic is in Part 2) and the game pays seventeen dollars a roll, on average, over many plays.</p>
+  <p>Now look again at the three things that can actually happen on any single roll: lose two dollars, win ten, or win a hundred. Seventeen dollars isn't on that list. Nobody ever walks away from one roll of this die having won exactly seventeen dollars. The expected value isn't a typical outcome, and here it isn't even a possible one. It's a balance point, weighted by probability, and a balance point routinely sits in the empty space between the values a variable can actually take.</p>
+
+  <svg viewBox="0 0 700 215" width="100%" role="img" aria-label="A balance beam with three weights at -2 dollars, 10 dollars, and 100 dollars, sized by their probability. The fulcrum, marking the expected value of 17 dollars, sits in empty space to the right of the 10-dollar weight and well short of the 100-dollar weight.">
+    <line x1="40" y1="150" x2="660" y2="150" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="127" cy="150" r="28" fill="var(--ink)" opacity="0.85"/>
+    <text x="127" y="100" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)" font-family="-apple-system,sans-serif">-2</text>
+    <text x="127" y="116" text-anchor="middle" font-size="11" fill="var(--dim)" font-family="-apple-system,sans-serif">p = 4/6</text>
+    <circle cx="179" cy="150" r="14" fill="var(--rust)" opacity="0.85"/>
+    <text x="179" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="var(--rust)" font-family="-apple-system,sans-serif">10</text>
+    <text x="179" y="130" text-anchor="middle" font-size="11" fill="var(--dim)" font-family="-apple-system,sans-serif">p = 1/6</text>
+    <circle cx="564" cy="150" r="14" fill="var(--rust)" opacity="0.85"/>
+    <text x="564" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="var(--rust)" font-family="-apple-system,sans-serif">100</text>
+    <text x="564" y="130" text-anchor="middle" font-size="11" fill="var(--dim)" font-family="-apple-system,sans-serif">p = 1/6</text>
+    <polygon points="209,150 197,178 221,178" fill="var(--gold)"/>
+    <text x="209" y="198" text-anchor="middle" font-size="14" font-weight="700" fill="var(--gold)" font-family="-apple-system,sans-serif">E[X] = 17</text>
+  </svg>
+  <div class="legend"><span>position on the beam = dollar payoff</span><span>size of the circle = probability of that payoff</span><span><b style="color:var(--gold)">▲</b> fulcrum = E[X], the balance point</span></div>
+
+  <p>That balance point has a name, expected value, written $E[X]$. Part 2 defines it properly, alongside its natural companion, variance, which measures how far the weights typically sit from the balance point.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>PMF, mean, variance, and the normal curve</h2>
+  <p>A discrete random variable $X$ takes on a finite list of values, each with a probability attached. That assignment is its probability mass function, $p(x) = P(X=x)$, and probabilities across every possible value must add to one: $\sum_x p(x) = 1$.</p>
+  <div class="eq">$$E[X] = \sum_x x\,p(x)$$</div>
+  <p>This is the weighted average from Part 1, written properly. It's called the mean of $X$ and usually denoted $\mu$.</p>
+  <div class="eq">$$\mathrm{Var}(X) = E\big[(X-\mu)^2\big] = E[X^2]-\big(E[X]\big)^2, \qquad \mathrm{SD}(X)=\sqrt{\mathrm{Var}(X)}$$</div>
+  <p>Variance is the average squared distance from the mean. Squaring the units is what makes the second formula, $E[X^2]-(E[X])^2$, the one you actually compute by hand: square first, average, then subtract the squared mean, rather than averaging squared deviations directly. Standard deviation undoes the squaring, so it comes back in the original units (dollars, not dollars squared) and reads as a typical distance from $\mu$.</p>
+
+  <p>Here is the die game from Part 1 as a full probability table, with the arithmetic carried through by hand.</p>
+  <table>
+    <thead><tr><th>x (dollars)</th><th>p(x)</th><th>x·p(x)</th><th>x²·p(x)</th></tr></thead>
+    <tbody>
+      <tr><td>-2</td><td>4/6</td><td>-8/6</td><td>16/6</td></tr>
+      <tr><td>10</td><td>1/6</td><td>10/6</td><td>100/6</td></tr>
+      <tr><td>100</td><td>1/6</td><td>100/6</td><td>10000/6</td></tr>
+      <tr><td>sum</td><td>1</td><td>102/6 = 17</td><td>10116/6 = 1686</td></tr>
+    </tbody>
+  </table>
+  <p>Reading the sums straight off the table: $E[X] = 17$ and $E[X^2] = 1686$, so</p>
+  <div class="eq">$$\mathrm{Var}(X) = 1686 - 17^2 = 1686 - 289 = 1397, \qquad \mathrm{SD}(X) = \sqrt{1397} \approx 37.38$$</div>
+  <p>A standard deviation of about 37 dollars, on a game whose only outcomes are -2, 10, and 100 dollars, tells you this isn't a tidy cluster around 17 dollars. It's lumpy and right-skewed: one rare, large win is doing most of the work, which is exactly the shape you'll meet again once real traffic data show up later in this guide.</p>
+
+  <p><b>From a lumpy payout table to a smooth curve.</b> Add up enough small, roughly independent random pieces (dice rolls, individual transaction sizes, measurement noise) and the distribution of the sum tends toward the same bell shape, regardless of what the individual pieces looked like. That fact is the Central Limit Theorem, it gets its own module later, and it is the main reason the normal distribution shows up everywhere. For now, treat it as a shape with two knobs.</p>
+  <p>A normal distribution is pinned down completely by its mean $\mu$ (where the peak sits) and its standard deviation $\sigma$ (how wide the bell is). You do not need to memorize its density to work with it, but for reference:</p>
+  <p style="text-align:center">$$f(x) = \frac{1}{\sigma\sqrt{2\pi}}\exp\!\left(-\frac{(x-\mu)^2}{2\sigma^2}\right)$$</p>
+  <p>What you do need are the two numbers themselves and one derived quantity, the z-score, which converts any raw value into a distance from the mean measured in standard deviations:</p>
+  <div class="eq">$$z = \frac{x-\mu}{\sigma}$$</div>
+  <p>For an approximately normal variable, that distance translates into a percentile through the empirical rule:</p>
+  <div class="eq">Within $\mu \pm 1\sigma$: about 68% of the data.<br>Within $\mu \pm 2\sigma$: about 95%.<br>Within $\mu \pm 3\sigma$: about 99.7%.</div>
+  <p>Worked check: suppose exam scores are approximately normal with $\mu = 75$ and $\sigma = 8$, and a student scores $x = 91$. Her z-score is $z = (91-75)/8 = 16/8 = 2.0$, two standard deviations above the mean. The empirical rule puts about 95% of scores within two standard deviations of the mean, leaving 5% in the two tails combined, so by its rough symmetric split she lands around the top 2.5% of the class.</p>
+  <p>Every step of that check leaned on one assumption: the scores are close to symmetric and bell-shaped. Parts 3 and 4 ask what happens to it once that assumption fails.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>Skewed versus normal, in R</h2>
+  <p><span class="mono">rlnorm()</span> draws from a lognormal distribution: take a normal random variable and exponentiate it. That single transformation turns a symmetric bell curve into a strictly positive, right-skewed shape, which makes it a convenient stand-in for the kind of skewed data the rest of this guide runs on.</p>
+<pre><span class="c"># right-skewed sample: X = exp(Z), Z ~ Normal(0,1)</span>
+<span class="k">set.seed</span>(2024)
+n &lt;- 10000
+skewed &lt;- <span class="k">rlnorm</span>(n, meanlog = 0, sdlog = 1)
+normal &lt;- <span class="k">rnorm</span>(n, mean = 0, sd = 1)
+
+<span class="k">c</span>(mean = <span class="k">mean</span>(skewed), median = <span class="k">median</span>(skewed), sd = <span class="k">sd</span>(skewed))
+<span class="c">#&gt;    mean  median      sd
+#&gt;  1.6417  0.9798  2.1057</span>
+
+<span class="k">c</span>(mean = <span class="k">mean</span>(normal), median = <span class="k">median</span>(normal), sd = <span class="k">sd</span>(normal))
+<span class="c">#&gt;      mean    median        sd
+#&gt;   -0.0019    0.0050    1.0062</span>
+
+<span class="c"># this site's convention: quantile type 8 (Hyndman-Fan, median-unbiased) everywhere</span>
+<span class="k">quantile</span>(skewed, probs = <span class="k">c</span>(0.25, 0.5, 0.75), type = 8)
+<span class="c">#&gt;    25%    50%    75%
+#&gt; 0.5049 0.9798 1.9623</span></pre>
+  <p>The normal sample's mean and median land almost on top of each other, -0.0019 versus 0.0050, exactly what symmetry predicts. The skewed sample's mean, 1.6417, sits well above its median, 0.9798, a gap of about 0.66, because a handful of large draws pull the average up without moving the middle. Both numbers are close to the exact lognormal values ($e^{0.5}\approx 1.6487$ for the mean, $1$ for the median), the small remaining gap is Monte Carlo noise from n = 10,000.</p>
+  <p>The <span class="mono">type = 8</span> argument tells R to use the Hyndman-Fan plotting position, which is median-unbiased regardless of the parent distribution's shape; that's why it's the convention this whole site uses for every quantile, the derivation itself is out of scope here.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">4</span>Where this goes next</h2>
+  <p>The mean-median gap you just saw in R is exactly why the z-score trick from Part 2 stops working on skewed data. Standardizing by $\mu$ and $\sigma$ only maps onto a fixed percentile when the underlying shape is close to symmetric, and a right-skewed variable breaks that mapping. The channel-level volume score running through this guide is bounded, piles up at zero, and stretches into a long right tail, nothing like the exam-score example above.</p>
+  <p>That's why the deep dives on <a href="extremeness.html">extremeness</a> and <a href="threshold.html">thresholds</a> replace z-scores with each channel's own percentile and its own exceedance probability, so "top 5%" means the same thing in every channel instead of quietly meaning something different in each.</p>
+</div>
+<!-- MODULE_BODY_END -->
+
+<div class="card" style="background:linear-gradient(180deg,#fff,#f7f2ea)">
+  <h2><span class="n">✓</span>Quick check</h2>
+  <p style="color:var(--dim);margin-top:-.3rem">Three problems on this module's material. Generated fresh each time; use "new numbers" for more reps, or see the <a href="practice.html">full practice bank</a> for everything.</p>
+  <div id="qc"></div>
+</div>
+
+<footer>
+  <a href="index.html">← all modules</a> &nbsp;·&nbsp; next: <a href="m2-estimation-clt.html">Estimation, the CLT &amp; confidence intervals →</a><br>
+  Synthetic data, generated in your browser. Ian Helfrich, Ph.D.
+</footer>
+</div>
+
+<script src="lib.js"></script>
+<script src="problems.js"></script>
+<script src="render.js"></script>
+<script>renderQuickCheck(document.getElementById("qc"), ["pmfmv","zscore_calc","emprule"], 8801);</script>
+</body>
+</html>

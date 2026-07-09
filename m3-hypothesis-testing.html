@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hypothesis testing, done right</title>
+<link rel="stylesheet" href="style.css">
+<script>MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},svg:{fontCache:'global'}};</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="mj"></script>
+</head>
+<body>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">/ module 3 of 5 · hypothesis testing</span></nav>
+<div class="wrap">
+<header>
+  <div class="tag">Module 3 · Inference</div>
+  <h1>Hypothesis testing, done right</h1>
+  <p class="sub">Five parts, always in the same order, and one number, the p-value, that gets misread more than any other in applied work. This module builds the t-test from scratch and gives you the vocabulary to say precisely what a test result does and does not mean.</p>
+</header>
+
+<!-- MODULE_BODY_START -->
+<div class="card">
+  <h2><span class="n">1</span>A coin that feels rigged, and the question that follows</h2>
+  <p>A friend hands you a coin before a pickup basketball game and offers to flip for first ball. You've played him before, and you've noticed he wins the flip more often than seems right. So instead of calling it in the air, you ask to flip it yourself, twenty times, just to see. It comes up heads 15 times out of 20.</p>
+  <p>Is that suspicious, or is it exactly the kind of thing an honest coin does sometimes? You don't get to rewind and ask the coin its true nature directly. What you can do is ask a narrower, answerable question: if the coin really is fair, nothing shady, 50/50 like it's supposed to be, how often would twenty flips land this lopsided or worse, purely from ordinary randomness? If that happens all the time under a fair coin, 15 heads is unremarkable and you should let it go. If it almost never happens under a fair coin, something else is probably going on.</p>
+  <p>That's the entire idea behind a hypothesis test. You assume the boring explanation, nothing interesting happening, the coin is fair, and you ask how surprising your actual data would be under that assumption. Not whether the boring explanation is true. How surprising the data looks if it were.</p>
+  <p>The widget below makes that question exact for the coin. Twenty flips of a fair coin follow a known distribution, the binomial, and you can compute directly what fraction of all possible outcomes are at least as far from an even 10/10 split as whatever you dial in. Drag the slider away from 10: the shaded region, outcomes at least this extreme in either direction, shrinks fast, and the printed probability drops with it. Sitting right at 10 heads, dead center, every outcome technically counts as "at least this typical," so the number reads 100%. By 18 or 19 heads it's a fraction of one percent. At 15, where the story started, it lands around 4%, on the edge of what people conventionally call suspicious.</p>
+  <div class="controls"><div class="ctrl">
+    <label>Heads out of 20 flips <b id="headsOut"></b></label>
+    <input id="heads" type="range" min="0" max="20" step="1" value="15">
+  </div></div>
+  <canvas id="coinCanvas" width="880" height="200"></canvas>
+  <p style="font-size:.92rem;margin:.2rem 0 0">Chance a truly fair coin produces a result this lopsided or worse: <b id="pOut" class="mono"></b></p>
+  <div class="legend"><span><b style="color:var(--ink)">■</b> outcomes no more extreme than this one</span><span><b style="color:var(--rust)">■</b> outcomes at least this extreme, both directions</span></div>
+  <p>That printed number already has a name, the p-value, though nobody has called it that yet. Part 2 gives the whole machinery around it a name and an order, so the same question, "how surprising is this, if nothing interesting is happening," can be asked of a mean, a proportion, or a regression coefficient, not just a coin.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">2</span>The five parts, always in this order</h2>
+  <p>Every hypothesis test, no matter what it's testing, is built from the same five pieces, assembled in the same sequence. Skipping one, or doing them out of order, is how a test stops meaning what people think it means.</p>
+  <p><b>1. The null hypothesis, $H_0$.</b> A specific, pinned-down claim about the population, almost always "no effect" or "no difference": $\mu = \mu_0$, $\mu_1 = \mu_2$, a regression slope $\beta_1 = 0$. It has to be precise enough that a probability distribution follows from it. "The coin is roughly fair" is not precise enough to compute anything from; "$P(\text{heads}) = 0.5$" is.</p>
+  <p><b>2. The alternative hypothesis, $H_a$.</b> What you actually suspect: $\mu \neq \mu_0$ (two-sided, you just think it's off) or $\mu > \mu_0$ / $\mu < \mu_0$ (one-sided, you have a direction in mind before looking at the data). Choosing one-sided after seeing which way the data leans is a well-known way to cheat yourself; the direction has to come from the question, not from a peek at the answer.</p>
+  <p><b>3. The test statistic.</b> One number, computed from the sample, that measures how far the data sits from what $H_0$ predicts, in standardized units. With a known population standard deviation $\sigma$ (rare in practice) it's a $z$-statistic; with $\sigma$ estimated from the sample by $s$ (the normal case), it's a $t$-statistic:</p>
+  <div class="eq" style="overflow-x:auto">$$z = \frac{\bar x - \mu_0}{\sigma/\sqrt n} \qquad\text{(}\sigma\text{ known)}, \qquad\qquad t = \frac{\bar x - \mu_0}{s/\sqrt n} \qquad\text{(}\sigma\text{ unknown, the usual case)}$$</div>
+  <p>Under $H_0$, $z$ follows a standard normal, $N(0,1)$, and $t$ follows a $t$-distribution with $n-1$ degrees of freedom, $t_{n-1}$, which is shaped like the normal but with heavier tails at small $n$ to account for the extra uncertainty in estimating $\sigma$ from the same sample. Everything below uses $t$, because knowing $\sigma$ exactly, without also having to estimate it, essentially never happens outside a textbook.</p>
+  <p><b>4. The p-value.</b> The probability of seeing a test statistic at least as extreme as the one actually observed, if $H_0$ is exactly true:</p>
+  <div class="eq">$$p = P\big(|T| \ge |t_{\text{obs}}| \;\big|\; H_0\big) \qquad \text{(two-sided version)}$$</div>
+  <p>This is precisely the coin widget from Part 1, generalized from a binomial count to a $t$-statistic. A small $p$ means data this extreme would be rare under $H_0$. It does <em>not</em> mean $H_0$ is probably false, and it is not the probability that $H_0$ is true. The p-value is computed by assuming $H_0$ and asking about the data; it says nothing directly about the probability of the hypothesis itself, which would require a different framework entirely (Bayesian updating, the subject of module 4) to even define.</p>
+  <p><b>5. The decision.</b> Fix a significance level $\alpha$ in advance, conventionally 0.05, before looking at the p-value. If $p < \alpha$, reject $H_0$. If $p \ge \alpha$, fail to reject it. "Fail to reject" is a weaker claim than "accept": it means the data didn't produce enough evidence to rule $H_0$ out, not that $H_0$ has been confirmed. A test with too little data to detect anything will fail to reject almost regardless of what's actually true, so a null result is only informative once you know the test had a real chance of finding something (more on that a few paragraphs down, under power).</p>
+
+  <p><b>The one-sample t-test, worked by hand.</b> A delivery app advertises a 30-minute average delivery time. You suspect it's slower than that in practice and pull a sample of $n = 16$ recent deliveries, finding a mean of $\bar x = 34.5$ minutes with a standard deviation of $s = 9.0$ minutes.</p>
+  <p>Step 1: $H_0: \mu = 30$, and since the suspicion has a direction, $H_a: \mu > 30$ (one-sided).</p>
+  <p>Step 2: the standard error and the test statistic, worked one arithmetic step at a time.</p>
+  <div class="eq" style="overflow-x:auto">$$SE = \frac{s}{\sqrt n} = \frac{9.0}{\sqrt{16}} = \frac{9.0}{4} = 2.25$$</div>
+  <div class="eq" style="overflow-x:auto">$$t = \frac{\bar x - \mu_0}{SE} = \frac{34.5 - 30}{2.25} = \frac{4.5}{2.25} = 2.0$$</div>
+  <p>Step 3: with $n - 1 = 15$ degrees of freedom, the one-sided p-value is $P(t_{15} > 2.0)$. That tail probability isn't something you'd get exactly by hand from a table, but a t-table gives the bracket ($t_{15,\,0.05} = 1.753$, $t_{15,\,0.025} = 2.131$, and 2.0 sits between them), and software puts the exact figure at $p \approx 0.0320$ (Part 3 verifies this number directly in R).</p>
+  <p>Step 4: at $\alpha = 0.05$, $p = 0.0320 < 0.05$, so reject $H_0$. The sample gives evidence that deliveries run slower than the advertised 30 minutes, not proof, evidence. A different sample of 16 deliveries, drawn from the exact same underlying process, would give a somewhat different $\bar x$, $s$, and $t$, and occasionally a $p$ above 0.05 even when the true average really is 34.5. That sample-to-sample wobble is exactly what the next two paragraphs are about.</p>
+
+  <p><b>Two ways to be wrong.</b> A test's decision is a guess about a fact you can't observe directly, so it can be wrong in two structurally different ways.</p>
+  <table>
+    <thead><tr><th></th><th>$H_0$ actually true</th><th>$H_0$ actually false</th></tr></thead>
+    <tbody>
+      <tr><td>Reject $H_0$</td><td>Type I error (rate $\alpha$)</td><td>correct decision (power)</td></tr>
+      <tr><td>Fail to reject $H_0$</td><td>correct decision</td><td>Type II error (rate $\beta$)</td></tr>
+    </tbody>
+  </table>
+  <p>Think of a smoke detector. A <b>Type I error</b> is a false alarm: it goes off while the toast burns a little and there's no actual fire. $\alpha$, the significance level you picked before running the test, is exactly the false-alarm rate you've agreed to tolerate. A <b>Type II error</b> is a miss: there's a real fire and the detector stays silent. Power, $1 - \beta$, is the chance of catching a real fire when one exists, and it rises with a bigger true effect (an easier fire to smell), a bigger sample (more smoke particles reaching the sensor), and a looser $\alpha$ (a detector tuned to go off more easily, at the cost of more false alarms). A study that fails to reject $H_0$ but was never well powered to detect the effect in question hasn't shown much of anything; it's a smoke detector so insensitive that a real fire and no fire look about the same to it.</p>
+
+  <p><b>Effect size: a different question than the p-value.</b> The p-value answers a yes-or-no question: is this difference distinguishable from zero, given the noise in the sample? It says nothing about whether the difference is big enough to care about, and at a large enough sample size, almost any nonzero difference clears the bar. The tool for the second question is an effect size, and for two groups the standard one is Cohen's $d$: the mean gap measured in standard-deviation units, using a pooled standard deviation $s_p$ that blends the two groups' spreads, weighted by their sample sizes.</p>
+  <div class="eq" style="overflow-x:auto">$$d = \frac{\bar x_1 - \bar x_2}{s_p}, \qquad s_p = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}}$$</div>
+  <p>Take weekday deliveries against weekend ones: weekday $n=25$, mean 32 minutes, $s=8$; weekend $n=25$, mean 38 minutes, $s=8$. Equal sample sizes and equal spreads make the pooling trivial, $s_p = 8$ directly, so $d = (38-32)/8 = 0.75$. By Cohen's conventional benchmarks (0.2 small, 0.5 medium, 0.8 large) that's a medium-to-large gap. Those benchmarks are conventions, not laws: a "small" $d = 0.1$ shift, applied to millions of orders, can matter enormously to a business, while a "large" $d = 1.2$ measured on eight deliveries might not survive a second sample. Report both numbers together. The p-value says the gap is real. The effect size says how much it's worth caring about, and the two questions don't have to point the same direction.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">3</span>Watching it happen in R</h2>
+  <p>The one-sample delivery example above used tidy numbers on purpose, so the arithmetic would be checkable with a pencil. Real samples never come out that clean. The block below builds a 16-observation sample that reproduces the exact mean and standard deviation from Part 2 (using <span class="mono">scale()</span> to force it, since hand-picking 16 raw numbers that average to exactly 34.5 with $s=9.0$ is tedious), runs <span class="mono">t.test()</span> on it, and then moves to a noisier, more realistic two-group comparison and a sample-size question.</p>
+<pre><span class="c"># One-sample: is the app's "30-minute average" claim holding up?</span>
+<span class="k">set.seed</span>(511)
+raw &lt;- <span class="k">rnorm</span>(16)
+delivery &lt;- <span class="k">as.numeric</span>(<span class="k">scale</span>(raw)) * 9 + 34.5   <span class="c"># forces mean = 34.5, sd = 9.0, n = 16</span>
+<span class="k">c</span>(mean = <span class="k">mean</span>(delivery), sd = <span class="k">sd</span>(delivery))
+<span class="c">#   mean   sd
+# 34.5    9.0
+
+t.test</span>(delivery, mu = 30, alternative = <span class="k">"greater"</span>)
+<span class="c">#         One Sample t-test
+# data:  delivery
+# t = 2, df = 15, p-value = 0.03197
+# alternative hypothesis: true mean is greater than 30
+# 95 percent confidence interval:
+#  30.55564      Inf
+# sample estimates:
+# mean of x
+#      34.5</span>
+
+<span class="c"># Two-sample: are weekend deliveries actually slower than weekday ones?</span>
+<span class="k">set.seed</span>(913)
+weekday &lt;- <span class="k">rnorm</span>(25, mean = 32, sd = 8)
+weekend &lt;- <span class="k">rnorm</span>(25, mean = 38, sd = 8)
+<span class="k">t.test</span>(weekday, weekend)
+<span class="c">#         Welch Two Sample t-test
+# data:  weekday and weekend
+# t = -2.4873, df = 45.185, p-value = 0.01663
+# alternative hypothesis: true difference in means is not equal to 0
+# 95 percent confidence interval:
+#  -10.632458  -1.118313
+# sample estimates:
+# mean of x mean of y
+#  31.63003  37.50542</span>
+
+<span class="c"># Cohen's d, from the same two samples</span>
+sp &lt;- <span class="k">sqrt</span>((24*<span class="k">var</span>(weekday) + 24*<span class="k">var</span>(weekend)) / 48)
+(<span class="k">mean</span>(weekend) - <span class="k">mean</span>(weekday)) / sp
+<span class="c"># [1] 0.7035163
+
+# How many days of weekend deliveries to reliably catch a real 3-minute slip?</span>
+<span class="k">power.t.test</span>(delta = 3, sd = 9, power = 0.80, sig.level = 0.05,
+             type = <span class="k">"one.sample"</span>, alternative = <span class="k">"one.sided"</span>)
+<span class="c">#      n = 57.02048   (round up to 58)
+#  delta = 3
+#     sd = 9
+#  power = 0.8
+
+# same question, but insisting on 90% power instead of 80%:
+#      n = 78.44742   (round up to 79)</span></pre>
+  <p>The forced sample reproduces $t = 2$, $df = 15$, $p = 0.03197$ exactly, confirming the hand arithmetic from Part 2 down to the fourth decimal. The one-sided 95% interval R prints, $[30.556, \infty)$, is the interval version of the same test: 30 sits just below its lower edge, which is the same fact as $p < 0.05$ stated a different way.</p>
+  <p>The weekday-versus-weekend comparison is where a real sample shows its texture. <span class="mono">t.test()</span> defaults to Welch's version, which does not assume the two groups share a variance, and the degrees of freedom it reports, 45.185, is not a whole number, a direct sign that it's not the plain $n_1+n_2-2$ formula underneath. The gap comes out significant ($p = 0.0166$) with an effect size of $d \approx 0.70$, close to the hand-computed 0.75 from Part 2 even though this sample is noisier (weekday $s = 7.23$, weekend $s = 9.34$, not the tidy matched 8 and 8 used for the pencil version). The power calculation puts a number on a question that matters before you ever collect data: catching a real 3-minute slip with 80% reliability takes about 58 sampled deliveries; pushing to 90% reliability costs another 21, up to 79. Power buys certainty, and it buys it at a shrinking rate.</p>
+</div>
+
+<div class="card">
+  <h2><span class="n">4</span>Where the plain t-test starts to strain</h2>
+  <p>Everything above worked cleanly on the delivery-time examples because nothing forced it to work hard: equal-ish spreads, a moderate sample, nothing pinned against a boundary. The classic two-sample $t$-formula quietly assumes the two groups share one variance, and <a href="welch.html">welch.html</a> takes that assumption apart directly, showing why it should never be the default once group sizes or spreads differ, which is closer to how a real ad-traffic segment behaves than a textbook pair of samples.</p>
+  <p>The other strain shows up at scale, straight through the arithmetic itself. The standard error in every formula above shrinks like $1/\sqrt n$, so with tens of thousands of rows in a channel, almost any nonzero gap eventually produces a vanishing p-value, whether or not it's a gap worth acting on. That's the same lesson as the power table, run in reverse. <a href="qqplot.html">qqplot.html</a> picks up the other half of the strain: whether the normal-ish shape these formulas quietly assume is even a reasonable description of a bounded, zero-inflated, right-skewed score in the first place, before any p-value from it can be trusted at all.</p>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var N = 20, TOTAL = Math.pow(2, N);
+  var coeffs = new Array(N + 1); coeffs[0] = 1;
+  for (var k = 1; k <= N; k++) coeffs[k] = Math.round(coeffs[k - 1] * (N - k + 1) / k);
+  var probs = coeffs.map(function(c){ return c / TOTAL; });
+  var maxP = Math.max.apply(null, probs);
+
+  function twoSidedP(kobs){
+    var s = 0;
+    for (var i = 0; i <= N; i++) if (Math.abs(i - 10) >= Math.abs(kobs - 10)) s += probs[i];
+    return s;
+  }
+
+  var cv = $("coinCanvas"), ctx = cv.getContext("2d");
+  var W = cv.width, H = cv.height, mL = 20, mR = 10, mT = 14, mB = 22;
+  var barW = (W - mL - mR) / (N + 1);
+
+  function draw(kobs){
+    ctx.clearRect(0, 0, W, H);
+    var base = H - mB;
+    for (var k = 0; k <= N; k++){
+      var h = (probs[k] / maxP) * (H - mT - mB);
+      var x = mL + k * barW;
+      var extreme = Math.abs(k - 10) >= Math.abs(kobs - 10);
+      ctx.fillStyle = extreme ? PAL.rust : PAL.ink;
+      ctx.globalAlpha = extreme ? 0.85 : 0.32;
+      ctx.fillRect(x, base - h, barW - 2, h);
+      ctx.globalAlpha = 1;
+      if (k === kobs){
+        ctx.strokeStyle = PAL.gold; ctx.lineWidth = 2;
+        ctx.strokeRect(x, base - h, barW - 2, h);
+      }
+    }
+    ctx.fillStyle = PAL.dim; ctx.font = "10px -apple-system,sans-serif";
+    for (var g = 0; g <= N; g += 5) ctx.fillText(g, mL + g * barW, H - 6);
+  }
+
+  function update(){
+    var kobs = +$("heads").value;
+    $("headsOut").textContent = kobs + " / 20";
+    draw(kobs);
+    var p = twoSidedP(kobs);
+    $("pOut").textContent = (p < 0.0001) ? p.toExponential(2) : (100 * p).toFixed(2) + "%";
+  }
+  $("heads").addEventListener("input", update);
+  update();
+});
+</script>
+<!-- MODULE_BODY_END -->
+
+<div class="card" style="background:linear-gradient(180deg,#fff,#f7f2ea)">
+  <h2><span class="n">✓</span>Quick check</h2>
+  <p style="color:var(--dim);margin-top:-.3rem">Problems on this module's material, including two conceptual multiple-choice. Generated fresh each time; see the <a href="practice.html">full practice bank</a> for everything.</p>
+  <div id="qc"></div>
+</div>
+
+<div class="card">
+  <h2><span class="n">→</span>Go deeper</h2>
+  <p>Two interactive pages built earlier expand directly on this module: <a href="welch.html">Welch vs pooled SE, and why significance is a foregone conclusion at large n</a>, and <a href="qqplot.html">reading a QQ plot</a> to check whether a normal approximation is reasonable in the first place.</p>
+</div>
+
+<footer>
+  <a href="m2-estimation-clt.html">← Estimation &amp; the CLT</a> &nbsp;·&nbsp; <a href="index.html">all modules</a> &nbsp;·&nbsp; next: <a href="m4-bayes.html">Bayesian updating →</a><br>
+  Synthetic data, generated in your browser. Ian Helfrich, Ph.D.
+</footer>
+</div>
+
+<script src="lib.js"></script>
+<script src="problems.js"></script>
+<script src="render.js"></script>
+<script>renderQuickCheck(document.getElementById("qc"), ["ttest","welch","welcheq","mw","ci_ttest_link","clt_mc"], 8803);</script>
+</body>
+</html>

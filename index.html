@@ -3,24 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Applied methods, interactive</title>
+<title>Applied statistics &amp; econometrics, from the ground up</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  .modrow{display:flex;align-items:baseline;gap:.7rem;margin-bottom:.15rem}
+  .modrow .num{font-size:.78rem;font-weight:800;letter-spacing:.04em;color:var(--gold)}
+  .roadmap ul{margin:.5rem 0 .2rem 1.1rem} .roadmap li{margin:.25rem 0;color:var(--dim)}
+  .roadmap li b{color:var(--ink);font-weight:600}
+  .sectiontag{font-size:.78rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--dim);margin:2rem 0 .4rem}
+</style>
 </head>
 <body>
-<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">interactive notes</span></nav>
+<nav class="top"><a class="home" href="index.html">Applied methods</a><span class="crumb">a working study guide</span></nav>
 <div class="wrap">
 <header>
-  <div class="tag">Interactive teaching notes</div>
-  <h1>How to think about a skewed, multi-channel score</h1>
-  <p class="sub">Short interactive pieces on the questions that come up when a heavy-tailed volume measure is split across channels: how to compare groups, how to judge whether a value is extreme, and how to set a threshold that means the same thing everywhere. Every page runs on synthetic data generated in your browser. No real data is used.</p>
+  <div class="tag">Dual-track study guide · theory by hand, applied in R</div>
+  <h1>Applied statistics &amp; econometrics, from the ground up</h1>
+  <p class="sub">Five modules, each in two halves: the math worked by hand with a pencil, and the same idea run for real in R with verified output. Every module ends with checked practice problems that generate fresh numbers every time. The running example throughout is a skewed, multi-channel volume score, so the methods stay attached to a real applied problem instead of floating free as formulas.</p>
 </header>
 
+<div class="sectiontag">The course</div>
 <div class="grid">
-  <a class="tile" href="practice.html" style="grid-column:1/-1;background:linear-gradient(180deg,#fff, #f7f2ea)">
-    <span class="k">Practice</span>
-    <h3>Practice problems, with data →</h3>
-    <p>Worked problems across descriptives, the t-test and Welch, OLS, Bayes, thresholds, and the conceptual traps. Generated data, checked answers, full solutions, endless fresh versions.</p>
+  <a class="tile" href="m1-distributions.html">
+    <div class="modrow"><span class="num">MODULE 1</span></div>
+    <h3>Distributions &amp; the shape of data</h3>
+    <p>Random variables, mean and variance by hand, the normal distribution, and why a skewed shape breaks the z-score trick.</p>
   </a>
+  <a class="tile" href="m2-estimation-clt.html">
+    <div class="modrow"><span class="num">MODULE 2</span></div>
+    <h3>Estimation, the CLT &amp; confidence intervals</h3>
+    <p>Why averaging narrows an estimate, the sqrt(n) law, and building a confidence interval by hand and by simulation.</p>
+  </a>
+  <a class="tile" href="m3-hypothesis-testing.html">
+    <div class="modrow"><span class="num">MODULE 3</span></div>
+    <h3>Hypothesis testing, done right</h3>
+    <p>The five-part structure of every test, the t-statistic derived and worked by hand, and what a p-value does not mean.</p>
+  </a>
+  <a class="tile" href="m4-bayes.html">
+    <div class="modrow"><span class="num">MODULE 4</span></div>
+    <h3>Bayes: updating a belief with evidence</h3>
+    <p>The theorem proved in three lines, the natural-frequency trick for doing it in your head, and why a good flag on a rare event still cries wolf.</p>
+  </a>
+  <a class="tile" href="m5-regression.html">
+    <div class="modrow"><span class="num">MODULE 5</span></div>
+    <h3>Regression &amp; causal thinking</h3>
+    <p>OLS derived from the first-order conditions, why a 0/1 predictor's coefficient is just a group difference, and when a coefficient is not entitled to a causal reading.</p>
+  </a>
+  <a class="tile" href="practice.html" style="background:linear-gradient(180deg,#fff, #f7f2ea)">
+    <div class="modrow"><span class="num">PRACTICE</span></div>
+    <h3>The full problem bank →</h3>
+    <p>Every module's problems in one place, filterable by topic, generated data, checked answers, endless fresh reps.</p>
+  </a>
+</div>
+
+<div class="sectiontag">Applied deep dives</div>
+<div class="grid">
   <a class="tile" href="threshold.html">
     <span class="k">The core idea</span>
     <h3>One threshold, four policies</h3>
@@ -43,11 +81,19 @@
   </a>
 </div>
 
-<div class="card">
-  <p style="margin:.2rem 0;color:var(--dim)">The thread through all four: name the decision first, then the quantity that decision needs, then the tool. A test statistic is rarely that quantity.</p>
+<div class="card roadmap">
+  <h2 style="margin-top:0">What's built, what's next</h2>
+  <p style="color:var(--dim);margin-top:-.2rem">The five modules above plus the four applied pages and the practice bank are complete and checked. This guide keeps growing. Planned next, roughly in order:</p>
+  <ul>
+    <li><b>Multiple regression in depth.</b> Omitted-variable bias made concrete, interaction terms, and reading a real regression table end to end.</li>
+    <li><b>Model diagnostics.</b> Residual plots, testing for heteroskedasticity, and what to do when the Gauss-Markov conditions fail.</li>
+    <li><b>Quantile regression.</b> The natural next step after Module 5, and the tool this site's own threshold problem actually calls for.</li>
+    <li><b>Causal inference.</b> Difference-in-differences and instrumental variables, for when a coefficient needs to earn a causal claim.</li>
+    <li><b>Maximum likelihood &amp; logistic regression.</b> The estimation principle underneath most of what came before, made explicit.</li>
+  </ul>
 </div>
 
-<footer>Synthetic data throughout. Built as teaching notes.<br>Ian Helfrich, Ph.D.</footer>
+<footer>Synthetic data throughout, generated in your browser. No real client data is used or transmitted.<br>Ian Helfrich, Ph.D.</footer>
 </div>
 </body>
 </html>
